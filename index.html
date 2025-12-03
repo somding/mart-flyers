@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마트 전단지 모아보기</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>🛒 마트 전단지 모아보기</h1>
+            <p>이마트, 홈플러스, 롯데마트의 전단지를 한눈에 확인하세요.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="mart-list" class="mart-grid">
+            <!-- Mart cards will be injected here by script.js -->
+        </div>
+    </main>
+
+    <div id="flyer-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modal-title"></h2>
+
+            <div class="modal-tabs">
+                <button id="tab-current" class="tab-btn active">최신 전단지</button>
+                <button id="tab-past" class="tab-btn">지난 전단지</button>
+            </div>
+
+            <div id="flyer-container" class="flyer-container">
+                <!-- Images will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

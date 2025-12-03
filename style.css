@@ -1,0 +1,358 @@
+:root {
+    --primary-color: #2c3e50;
+    --accent-color: #e74c3c;
+    --bg-color: #f4f7f6;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 0;
+    text-align: center;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Mart Grid */
+.mart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    padding-bottom: 60px;
+}
+
+.mart-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.mart-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.flyer-container {
+    width: 100%;
+    min-height: 400px;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.flyer-img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 10px;
+    /* Space between pages */
+}
+
+.flyer-img:last-child {
+    margin-bottom: 0;
+}
+
+.mart-logo-area {
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 20px;
+}
+
+.mart-logo {
+    max-width: 80%;
+    max-height: 80%;
+    object-fit: contain;
+    font-size: 1.5rem;
+    /* Fallback if image fails */
+    font-weight: bold;
+    color: #555;
+}
+
+.mart-info {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+.mart-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.mart-desc {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.view-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    color: white;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: var(--transition);
+    text-align: center;
+    width: 100%;
+}
+
+.view-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    max-width: 95%;
+    /* Increased for mobile */
+    max-height: 90%;
+    width: 800px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #aaa;
+    transition: var(--transition);
+    z-index: 20;
+}
+
+.close-button:hover {
+    color: #333;
+}
+
+#modal-title {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    text-align: center;
+    padding-right: 30px;
+    /* Space for close button */
+}
+
+/* Tabs */
+.modal-tabs {
+    display: flex;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.tab-btn:hover {
+    background-color: #f9f9f9;
+}
+
+.flyer-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    text-align: center;
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 10px;
+    position: relative;
+}
+
+#flyer-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Past List */
+.past-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.past-flyer-item {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.past-flyer-item:hover {
+    transform: translateX(5px);
+    background-color: #f0f4f8;
+}
+
+.past-flyer-item::after {
+    content: '→';
+    color: #ccc;
+}
+
+/* Link View */
+.link-view {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.link-view p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #555;
+}
+
+.link-btn {
+    display: inline-block;
+    padding: 15px 30px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    color: white;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: var(--transition);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.link-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header {
+        padding: 40px 0;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+    }
+
+    .mart-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .modal-content {
+        padding: 15px;
+        width: 100%;
+        height: 100%;
+        /* Full screen on mobile */
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .tab-btn {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+}
