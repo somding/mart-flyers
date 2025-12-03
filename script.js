@@ -1,71 +1,3 @@
-const marts = [
-    {
-        id: 'emart',
-        name: '이마트 (E-mart)',
-        description: '대한민국 1등 할인점, 이마트의 최신 전단지를 확인하세요.',
-        logo: './images/emart_logo.svg',
-        flyers: {
-            current: {
-                title: '최신 전단지 보기',
-                images: [
-                    './images/emart_01.jpg?v=2', './images/emart_02.jpg?v=2', './images/emart_03.jpg?v=2', './images/emart_04.jpg?v=2',
-                    './images/emart_05.jpg?v=2', './images/emart_06.jpg?v=2', './images/emart_07.jpg?v=2', './images/emart_08.jpg?v=2',
-                    './images/emart_09.jpg?v=2', './images/emart_10.jpg?v=2', './images/emart_11.jpg?v=2', './images/emart_12.jpg?v=2',
-                    './images/emart_13.jpg?v=2', './images/emart_14.jpg?v=2'
-                ],
-                type: 'image'
-            },
-            past: {
-                title: '지난 전단지',
-                images: [],
-                type: 'image'
-            }
-        }
-    },
-    {
-        id: 'homeplus',
-        name: '홈플러스 (Homeplus)',
-        description: '생활에 플러스가 됩니다. 홈플러스의 알뜰 정보를 만나보세요.',
-        logo: './images/homeplus_logo.png',
-        flyers: {
-            current: {
-                title: '최신 전단지 보기',
-                images: [
-                    './images/homeplus_01.jpg', './images/homeplus_02.jpg', './images/homeplus_03.jpg',
-                    './images/homeplus_04.jpg', './images/homeplus_05.jpg', './images/homeplus_06.jpg'
-                ],
-                type: 'image'
-            },
-            past: {
-                title: '지난 전단지',
-                images: [],
-                type: 'image'
-            }
-        }
-    },
-    {
-        id: 'lottemart',
-        name: '롯데마트 (Lotte Mart)',
-        description: '행복한 쇼핑, 롯데마트의 다양한 혜택을 놓치지 마세요.',
-        logo: './images/lotte_mart_logo.svg',
-        flyers: {
-            current: {
-                title: '최신 전단지 보기',
-                images: [
-                    './images/lotte_01.jpg', './images/lotte_02.jpg', './images/lotte_03.jpg',
-                    './images/lotte_04.jpg', './images/lotte_05.jpg'
-                ],
-                type: 'image'
-            },
-            past: {
-                title: '지난 전단지',
-                images: [],
-                type: 'image'
-            }
-        }
-    }
-];
-
 document.addEventListener('DOMContentLoaded', () => {
     const martList = document.getElementById('mart-list');
     const modal = document.getElementById('flyer-modal');
@@ -78,29 +10,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const flyerContainer = document.getElementById('flyer-container');
 
     let currentMart = null;
+    let marts = [];
+
+    // Fetch Data
+    fetch('data.json')
+        .then(response => response.json())
+        .then(data => {
+            marts = data;
+            renderMarts();
+        })
+        .catch(error => console.error('Error loading mart data:', error));
 
     // Render Mart Cards
-    marts.forEach(mart => {
-        const card = document.createElement('div');
-        card.className = 'mart-card';
-        card.innerHTML = `
-            <div class="mart-logo-area">
-                <img src="${mart.logo}" alt="${mart.name}" class="mart-logo">
-            </div>
-            <div class="mart-info">
-                <h3 class="mart-name">${mart.name}</h3>
-                <p class="mart-desc">${mart.description}</p>
-                <a href="#" class="view-btn">전단지 보기</a>
-            </div>
-        `;
+    function renderMarts() {
+        marts.forEach(mart => {
+            const card = document.createElement('div');
+            card.className = 'mart-card';
+            card.innerHTML = `
+                <div class="mart-logo-area">
+                    <img src="${mart.logo}" alt="${mart.name}" class="mart-logo">
+                </div>
+                <div class="mart-info">
+                    <h3 class="mart-name">${mart.name}</h3>
+                    <p class="mart-desc">${mart.description}</p>
+                    <a href="#" class="view-btn">전단지 보기</a>
+                </div>
+            `;
 
-        card.addEventListener('click', (e) => {
-            e.preventDefault();
-            openModal(mart);
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal(mart);
+            });
+
+            martList.appendChild(card);
         });
-
-        martList.appendChild(card);
-    });
+    }
 
     // Modal Logic
     function openModal(mart) {
