@@ -8,7 +8,10 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js"
+        integrity="sha384-l+xbElFSnP5k7wFMIzJ7N2jby995h4f3+jiW54WELQuqIM0tKNSjOTtgUZKw2dAa"
+        crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -33,6 +36,12 @@
             <div class="modal-tabs">
                 <button id="tab-current" class="tab-btn active">최신 전단지</button>
                 <button id="tab-past" class="tab-btn">지난 전단지</button>
+            </div>
+
+            <div class="share-container">
+                <button id="kakao-share-btn" class="kakao-btn">
+                    <span class="kakao-icon">💬</span> 카카오톡 공유하기
+                </button>
             </div>
 
             <div id="flyer-container" class="flyer-container">

@@ -125,6 +125,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Kakao Share Logic
+    const kakaoShareBtn = document.getElementById('kakao-share-btn');
+    
+    // Initialize Kakao SDK
+    // IMPORTANT: Replace 'YOUR_JAVASCRIPT_KEY' with your actual Kakao JavaScript Key
+    try {
+        if (!Kakao.isInitialized()) {
+            Kakao.init('YOUR_JAVASCRIPT_KEY'); 
+        }
+    } catch (e) {
+        console.warn('Kakao SDK not initialized. Please provide a valid key.');
+    }
+
+    if (kakaoShareBtn) {
+        kakaoShareBtn.addEventListener('click', () => {
+            if (!currentMart) return;
+
+            // Check if SDK is initialized
+            if (!Kakao.isInitialized()) {
+                alert('카카오톡 공유 기능을 사용하려면 JavaScript 키 설정이 필요합니다.');
+                return;
+            }
+
+            // Use the first image of the current flyer as the thumbnail
+            const imageUrl = currentMart.flyers.current.images[0] 
+                ? window.location.origin + currentMart.flyers.current.images[0].substring(1) // Convert relative path to absolute
+                : 'https://placehold.co/600x400?text=Mart+Flyer';
+
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: `${currentMart.name} 최신 전단지`,
+                    description: currentMart.description,
+                    imageUrl: imageUrl,
+                    link: {
+                        mobileWebUrl: window.location.href,
+                        webUrl: window.location.href,
+                    },
+                },
+                buttons: [
+                    {
+                        title: '전단지 보러가기',
+                        link: {
+                            mobileWebUrl: window.location.href,
+                            webUrl: window.location.href,
+                        },
+                    },
+                ],
+            });
+        });
+    }
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('show')) {
             closeModal();

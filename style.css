@@ -355,5 +355,40 @@ body {
 
     .view-btn {
         padding: 12px 0;
+
+        .view-btn {
+            padding: 12px 0;
+        }
+    }
+
+    /* Kakao Share Button */
+    .share-container {
+        padding: 0 20px 20px;
+        text-align: center;
+    }
+
+    .kakao-btn {
+        background-color: #FEE500;
+        color: #000000;
+        border: 3px solid black;
+        padding: 12px 24px;
+        font-size: 1rem;
+        font-weight: 800;
+        border-radius: 30px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 4px 4px 0px black;
+        transition: var(--transition);
+    }
+
+    .kakao-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px black;
+    }
+
+    .kakao-icon {
+        font-size: 1.2rem;
     }
 }
