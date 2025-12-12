@@ -45,41 +45,37 @@ async def scrape_emart(page, session):
     print(f"Scraping E-mart from {EMART_URL}...")
     images = []
     try:
-        await page.goto(EMART_URL, timeout=60000)
+        await page.goto(EMART_URL, timeout=90000)
         await page.wait_for_load_state('networkidle')
         
-        # Scroll down to trigger lazy loading
-        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        await page.wait_for_timeout(2000)
+        # Scroll down significantly to trigger any lazy loading
+        for _ in range(5):
+            await page.evaluate("window.scrollBy(0, 1000)")
+            await page.wait_for_timeout(1000)
         
+        # Get all images
         img_elements = await page.query_selector_all('img')
         
         count = 1
         for img in img_elements:
             src = await img.get_attribute('src')
-            # Relaxed filter: just check extensions. Rely on file size check for actual validation.
+            # Very loose filter
             if src and ('jpg' in src or 'png' in src or 'jpeg' in src):
                 if not src.startswith('http'):
                     src = 'https://eapp.emart.com' + src if src.startswith('/') else src
-                    
-                # Avoid duplicates in current run
+                
+                # Deduplicate
                 if any(src in url for url in images): continue
 
                 filename = f"emart_new_{count:02d}.jpg"
-                # Use evaluate to check render size if possible, or just download
-                try:
-                    width = await img.evaluate("el => el.naturalWidth")
-                    if width < 300: # Skip small icons
-                        continue
-                except:
-                    pass
-
-                print(f"Found potential E-mart image: {src}")
+                
+                # Check unique size or content? 
+                # Just check file size > 1KB
                 local_path = await download_image(session, src, filename)
                 if local_path:
                     images.append(local_path)
                     count += 1
-                    if count > 20: break 
+                    if count > 30: break 
 
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
@@ -120,32 +116,34 @@ async def scrape_lotte(page, session):
     print(f"Scraping Lotte Mart from {LOTTE_URL}...")
     images = []
     try:
-        await page.goto(LOTTE_URL, timeout=60000)
+        await page.goto(LOTTE_URL, timeout=90000) # Increased timeout
         await page.wait_for_load_state('networkidle')
-        await page.wait_for_timeout(3000) # Wait extra for Lotte
+        await page.wait_for_timeout(8000) # Wait 8 seconds for JS to load
         
-        # Try to find images inside a specific container if possible, or just all images
+        # Check for both src and data-src (lazy loading)
         img_elements = await page.query_selector_all('img')
         
         count = 1
         for img in img_elements:
             src = await img.get_attribute('src')
-            # Lotte specific check
-            if src and ('leaflet' in src or 'jpg' in src) and 'logo' not in src:
-                 if not src.startswith('http'):
+            data_src = await img.get_attribute('data-src')
+            real_src = src or data_src
+            
+            if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src:
+                 if not real_src.startswith('http'):
                     # Careful with relative path on Lotte
-                    if src.startswith('//'):
-                        src = 'https:' + src
-                    elif src.startswith('/'):
-                        src = 'https://www.mlotte.net' + src
+                    if real_src.startswith('//'):
+                        real_src = 'https:' + real_src
+                    elif real_src.startswith('/'):
+                        real_src = 'https://www.mlotte.net' + real_src
                  
-                 print(f"Found potential Lotte image: {src}")
+                 print(f"Found potential Lotte image: {real_src}")
                  filename = f"lotte_new_{count:02d}.jpg"
-                 local_path = await download_image(session, src, filename)
+                 local_path = await download_image(session, real_src, filename)
                  if local_path:
                     images.append(local_path)
                     count += 1
-                    if count > 15: break
+                    if count > 20: break
 
     except Exception as e:
         print(f"Error scraping Lotte: {e}")
