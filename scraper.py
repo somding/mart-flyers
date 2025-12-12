@@ -20,7 +20,13 @@ async def download_image(session, url, filename):
                 filepath = os.path.join(IMAGES_DIR, filename)
                 with open(filepath, 'wb') as f:
                     f.write(await response.read())
-                return f"./{IMAGES_DIR}/{filename}"
+                
+                # Check if file is valid (not empty)
+                if os.path.getsize(filepath) > 0:
+                    return f"./{IMAGES_DIR}/{filename}"
+                else:
+                    print(f"Downloaded empty file: {url}")
+                    os.remove(filepath)
     except Exception as e:
         print(f"Failed to download {url}: {e}")
     return None
