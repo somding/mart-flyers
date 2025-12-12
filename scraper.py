@@ -57,15 +57,24 @@ async def scrape_emart(page, session):
         count = 1
         for img in img_elements:
             src = await img.get_attribute('src')
-            if src and ('jpg' in src or 'png' in src) and 'logo' not in src and 'icon' not in src:
+            # Relaxed filter: just check extensions. Rely on file size check for actual validation.
+            if src and ('jpg' in src or 'png' in src or 'jpeg' in src):
                 if not src.startswith('http'):
                     src = 'https://eapp.emart.com' + src if src.startswith('/') else src
                     
                 # Avoid duplicates in current run
                 if any(src in url for url in images): continue
 
-                print(f"Found potential E-mart image: {src}")
                 filename = f"emart_new_{count:02d}.jpg"
+                # Use evaluate to check render size if possible, or just download
+                try:
+                    width = await img.evaluate("el => el.naturalWidth")
+                    if width < 300: # Skip small icons
+                        continue
+                except:
+                    pass
+
+                print(f"Found potential E-mart image: {src}")
                 local_path = await download_image(session, src, filename)
                 if local_path:
                     images.append(local_path)
@@ -161,29 +170,22 @@ async def main():
 
                 current_images = data[mart_index]['flyers']['current']['images']
                 
-                # Deduplication logic: 
-                # If the number of images is essentially the same and filenames look similar, skip.
-                # But since filenames change (emart_new_01 vs previous), we can't easily compare strings.
-                # However, if we just updated, we should avoid moving SAME content to past.
-                # Simple check: If 'past' is empty, move current to past.
-                # If 'past' is not empty, only overwrite past if current is different?
-                
-                # Simplified Logic for now: Always Archive CURRENT to PAST, then set NEW to CURRENT.
-                # But user said they are identical.
-                # Let's check if the list of filenames in current is exactly the same as the new list?
-                # No, the filenames are different (local paths vs scraped).
-                # Wait, new_images are local paths now.
-                
-                # Let's just always update. The user's issue was likely that the scraper ran twice quickly?
-                # Or that the scraper *failed* to get new images but still updated empty list?
-                # No, I have checks for empty list.
-                
+                # Check for duplication (Prevent setting Past == Current)
+                # Since scraper generates same filenames (emart_new_01.jpg), strict equality check works.
+                if current_images == new_images:
+                    print(f"New images are identical to current images for {data[mart_index]['name']}. Skipping update.")
+                    return
+
                 print(f"Updating {data[mart_index]['name']}...")
-                data[mart_index]['flyers']['past']['images'] = current_images
+                # Only archive if current is not empty and different
+                if current_images:
+                    data[mart_index]['flyers']['past']['images'] = current_images
+                
                 data[mart_index]['flyers']['current']['images'] = new_images
 
             # E-mart
             new_emart = await scrape_emart(page, session)
+            print(f"E-mart: Found {len(new_emart)} images.")
             update_mart_data(0, new_emart)
 
             # Homeplus
