@@ -43,40 +43,55 @@ async def download_image(session, url, filename):
 
 async def scrape_emart(page, session):
     print(f"Scraping E-mart from {EMART_URL}...")
-    images = []
+    intercepted_urls = set()
+    
+    # Handler to capture image requests
+    def handle_response(response):
+        try:
+            url = response.url
+            content_type = response.headers.get('content-type', '')
+            if 'image' in content_type and ('jpg' in url or 'png' in url or 'jpeg' in url):
+                 # Filter out small icons/logos if possible by URL name
+                 if 'logo' not in url and 'icon' not in url and 'button' not in url:
+                    intercepted_urls.add(url)
+        except:
+            pass
+
+    # Attach handler
+    page.on("response", handle_response)
+
     try:
         await page.goto(EMART_URL, timeout=90000)
         await page.wait_for_load_state('networkidle')
         
-        # Scroll down significantly to trigger any lazy loading
-        for _ in range(5):
-            await page.evaluate("window.scrollBy(0, 1000)")
-            await page.wait_for_timeout(1000)
+        # Slow scroll to trigger network requests
+        for i in range(10):
+            await page.evaluate("window.scrollBy(0, 800)")
+            await page.wait_for_timeout(1500)
         
-        # Get all images
-        img_elements = await page.query_selector_all('img')
+        # Detach handler (optional, but good practice)
+        page.remove_listener("response", handle_response)
         
+        print(f"E-mart: Intercepted {len(intercepted_urls)} image URLs.")
+        
+        images = []
         count = 1
-        for img in img_elements:
-            src = await img.get_attribute('src')
-            # Very loose filter
-            if src and ('jpg' in src or 'png' in src or 'jpeg' in src):
-                if not src.startswith('http'):
-                    src = 'https://eapp.emart.com' + src if src.startswith('/') else src
-                
-                # Deduplicate
-                if any(src in url for url in images): continue
+        # Sort to keep some order? Sets are unordered. Let's sort by URL length or alphabet?
+        # Actually, sorted() is enough to be deterministic.
+        for src in sorted(list(intercepted_urls)):
+             # Double check filter
+             if 'logo' in src or 'icon' in src: continue
+             
+             # Avoid duplicates
+             if any(src in url for url in images): continue
 
-                filename = f"emart_new_{count:02d}.jpg"
-                
-                # Check unique size or content? 
-                # Just check file size > 1KB
-                local_path = await download_image(session, src, filename)
-                if local_path:
-                    images.append(local_path)
-                    count += 1
-                    if count > 30: break 
-
+             filename = f"emart_new_{count:02d}.jpg"
+             local_path = await download_image(session, src, filename)
+             if local_path:
+                 images.append(local_path)
+                 count += 1
+                 if count > 20: break
+                 
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
     
