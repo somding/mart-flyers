@@ -11,7 +11,7 @@ IMAGES_DIR = 'images'
 # URLs (Based on user input)
 EMART_URL = 'https://eapp.emart.com/leaflet/leafletView_EL.do'
 HOMEPLUS_URL = 'https://my.homeplus.co.kr/leaflet'
-LOTTE_URL = 'https://www.lottemart.com/'   # Keeping previous placeholder for Lotte
+LOTTE_URL = 'https://www.mlotte.net/leaflet?leaflet_id=2000139'
 
 async def download_image(session, url, filename):
     try:
@@ -32,19 +32,12 @@ async def scrape_emart(page, session):
         await page.goto(EMART_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
         
-        # Try to find flyer images. 
-        # Common patterns for E-mart mobile app views:
-        # Look for images with 'leaflet' in the src or class, or just large images in the main container.
-        # This is a heuristic since we can't inspect directly.
-        
-        # Strategy: Get all images, filter for likely flyer candidates (large size or specific keywords)
         img_elements = await page.query_selector_all('img')
         
         count = 1
         for img in img_elements:
             src = await img.get_attribute('src')
             if src and ('jpg' in src or 'png' in src) and 'logo' not in src and 'icon' not in src:
-                # Resolve relative URLs
                 if not src.startswith('http'):
                     src = 'https://eapp.emart.com' + src if src.startswith('/') else src
                 
@@ -54,7 +47,7 @@ async def scrape_emart(page, session):
                 if local_path:
                     images.append(local_path)
                     count += 1
-                    if count > 15: break # Limit to 15 images
+                    if count > 15: break
 
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
@@ -68,7 +61,6 @@ async def scrape_homeplus(page, session):
         await page.goto(HOMEPLUS_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
         
-        # Homeplus logic
         img_elements = await page.query_selector_all('img')
         
         count = 1
@@ -91,11 +83,31 @@ async def scrape_homeplus(page, session):
     return images
 
 async def scrape_lotte(page, session):
-    print("Scraping Lotte Mart...")
+    print(f"Scraping Lotte Mart from {LOTTE_URL}...")
     images = []
     try:
         await page.goto(LOTTE_URL, timeout=60000)
-        pass
+        await page.wait_for_load_state('networkidle')
+        
+        # Lotte Mart logic
+        img_elements = await page.query_selector_all('img')
+        
+        count = 1
+        for img in img_elements:
+            src = await img.get_attribute('src')
+            # Lotte Mart often uses 'blob' or specific paths, but let's try generic first
+            if src and ('jpg' in src or 'png' in src) and 'logo' not in src:
+                 if not src.startswith('http'):
+                    src = 'https://www.mlotte.net' + src if src.startswith('/') else src
+                 
+                 print(f"Found potential Lotte image: {src}")
+                 filename = f"lotte_new_{count:02d}.jpg"
+                 local_path = await download_image(session, src, filename)
+                 if local_path:
+                    images.append(local_path)
+                    count += 1
+                    if count > 10: break
+
     except Exception as e:
         print(f"Error scraping Lotte: {e}")
     return images
