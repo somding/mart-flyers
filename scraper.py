@@ -21,11 +21,21 @@ async def download_image(session, url, filename):
                 with open(filepath, 'wb') as f:
                     f.write(await response.read())
                 
-                # Check if file is valid (not empty)
-                if os.path.getsize(filepath) > 0:
-                    return f"./{IMAGES_DIR}/{filename}"
+                # Check if file is valid (not empty and is an image)
+                file_size = os.path.getsize(filepath)
+                if file_size > 1000: # At least 1KB
+                    # Verify it's a real image by checking magic numbers
+                    with open(filepath, 'rb') as f:
+                        header = f.read(4)
+                    
+                    # JPEG (FF D8 FF), PNG (89 50 4E 47)
+                    if header.startswith(b'\xff\xd8\xff') or header.startswith(b'\x89PNG'):
+                        return f"./{IMAGES_DIR}/{filename}"
+                    else:
+                        print(f"Invalid image format (not JPG/PNG): {url}")
+                        os.remove(filepath)
                 else:
-                    print(f"Downloaded empty file: {url}")
+                    print(f"Downloaded file too small: {url} ({file_size} bytes)")
                     os.remove(filepath)
     except Exception as e:
         print(f"Failed to download {url}: {e}")
