@@ -175,26 +175,89 @@ async def main():
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
+import hashlib
+
+# ... imports ...
+
+def calculate_file_hash(filepath):
+    """Calculates the MD5 hash of a file."""
+    hasher = hashlib.md5()
+    try:
+        with open(filepath, 'rb') as f:
+            buf = f.read()
+            hasher.update(buf)
+        return hasher.hexdigest()
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Error calculating hash for {filepath}: {e}")
+        return None
+
+# ... scrape functions ...
+
             # Helper to update mart data safely
             def update_mart_data(mart_index, new_images):
                 if not new_images:
                     print(f"No new images found for {data[mart_index]['name']}")
                     return
 
-                current_images = data[mart_index]['flyers']['current']['images']
+                current_flyer_data = data[mart_index]['flyers']['current']
+                current_image_paths = current_flyer_data.get('images', [])
+
+                # strip query params if any (e.g. ?v=2)
+                clean_current_paths = []
+                for p in current_image_paths:
+                    clean_p = p.split('?')[0] # remove query param
+                    # Ensure path is relative to script execution
+                    if clean_p.startswith('./'):
+                        clean_p = clean_p[2:] # remove ./
+                    if clean_p.startswith('/'):
+                        clean_p = clean_p[1:]
+                    clean_current_paths.append(clean_p)
+
+                # Calculate hashes for current images
+                current_hashes = []
+                for p in clean_current_paths:
+                    # Construct full path. Assuming IMAGES_DIR is 'images'
+                    # But images/ is hardcoded in data.json as ./images/...
+                    # We need to find the file in 'images' dir.
+                    # The paths in data.json are relative to web root.
+                    # Locally scraping runs in root.
+                    # So 'images/filename.jpg' should be valid.
+                    
+                    # If file doesn't exist (e.g. deleted or placeholder), hash is None
+                    h = calculate_file_hash(p)
+                    if h:
+                        current_hashes.append(h)
                 
-                # Check for duplication (Prevent setting Past == Current)
-                # Since scraper generates same filenames (emart_new_01.jpg), strict equality check works.
-                if current_images == new_images:
-                    print(f"New images are identical to current images for {data[mart_index]['name']}. Skipping update.")
+                # Calculate hashes for new images
+                new_hashes = []
+                for p in new_images:
+                    # new_images are returned as "./images/..."
+                    clean_p = p
+                    if clean_p.startswith('./'):
+                        clean_p = clean_p[2:]
+                    h = calculate_file_hash(clean_p)
+                    if h:
+                        new_hashes.append(h)
+                
+                # STRICT COMPARISON
+                # Compare sets of hashes to ignore order? Or list to enforce order?
+                # Flyers usually have order. Let's compare lists.
+                if current_hashes and new_hashes and current_hashes == new_hashes:
+                    print(f"[{data[mart_index]['name']}] Images are content-identical. Skipping update.")
                     return
 
-                print(f"Updating {data[mart_index]['name']}...")
-                # Only archive if current is not empty and different
-                if current_images:
-                    data[mart_index]['flyers']['past']['images'] = current_images
+                print(f"[{data[mart_index]['name']}] content changed. Updating...")
                 
+                # Only archive if we have valid current images
+                if current_image_paths:
+                    data[mart_index]['flyers']['past']['images'] = current_image_paths
+                
+                # Update current
                 data[mart_index]['flyers']['current']['images'] = new_images
+
+            # ... scraper calls ...
 
             # E-mart
             new_emart = await scrape_emart(page, session)
