@@ -60,19 +60,26 @@ async def main():
 
         # Scrape and Update
         # E-mart (Index 0)
-        emart_images = await scrape_emart(page)
-        if emart_images:
-            data[0]['flyers']['current']['images'] = emart_images
+        new_emart_images = await scrape_emart(page)
+        if new_emart_images:
+            # Logic: Move current to past, then update current
+            print("New E-mart images found. Archiving old flyer...")
+            data[0]['flyers']['past']['images'] = data[0]['flyers']['current']['images']
+            data[0]['flyers']['current']['images'] = new_emart_images
 
         # Homeplus (Index 1)
-        homeplus_images = await scrape_homeplus(page)
-        if homeplus_images:
-            data[1]['flyers']['current']['images'] = homeplus_images
+        new_homeplus_images = await scrape_homeplus(page)
+        if new_homeplus_images:
+             # Logic: Move current to past, then update current
+            data[1]['flyers']['past']['images'] = data[1]['flyers']['current']['images']
+            data[1]['flyers']['current']['images'] = new_homeplus_images
 
         # Lotte (Index 2)
-        lotte_images = await scrape_lotte(page)
-        if lotte_images:
-            data[2]['flyers']['current']['images'] = lotte_images
+        new_lotte_images = await scrape_lotte(page)
+        if new_lotte_images:
+             # Logic: Move current to past, then update current
+            data[2]['flyers']['past']['images'] = data[2]['flyers']['current']['images']
+            data[2]['flyers']['current']['images'] = new_lotte_images
 
         # Save updated data
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
