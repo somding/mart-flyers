@@ -8,10 +8,10 @@ from playwright.async_api import async_playwright
 DATA_FILE = 'data.json'
 IMAGES_DIR = 'images'
 
-# URLs (Based on previous context)
-EMART_URL = 'https://store.emart.com/main/main.do'
-HOMEPLUS_URL = 'http://my.homeplus.co.kr/' # Example URL, might need adjustment
-LOTTE_URL = 'https://www.lottemart.com/'   # Example URL
+# URLs (Based on user input)
+EMART_URL = 'https://eapp.emart.com/leaflet/leafletView_EL.do'
+HOMEPLUS_URL = 'https://my.homeplus.co.kr/leaflet'
+LOTTE_URL = 'https://www.lottemart.com/'   # Keeping previous placeholder for Lotte
 
 async def download_image(session, url, filename):
     try:
@@ -26,26 +26,35 @@ async def download_image(session, url, filename):
     return None
 
 async def scrape_emart(page, session):
-    print("Scraping E-mart...")
+    print(f"Scraping E-mart from {EMART_URL}...")
     images = []
     try:
         await page.goto(EMART_URL, timeout=60000)
-        # Wait for flyer to load (This selector is a guess based on typical structures)
-        # In a real scenario, we'd inspect the page to find the exact selector for the flyer image.
-        # Assuming we find img tags inside a flyer container.
-        # For now, I will keep the logic robust: if it fails to find NEW images, it returns empty.
+        await page.wait_for_load_state('networkidle')
         
-        # Example logic: Find all images in the flyer area
-        # await page.wait_for_selector('.flyer-section img')
-        # img_elements = await page.query_selector_all('.flyer-section img')
+        # Try to find flyer images. 
+        # Common patterns for E-mart mobile app views:
+        # Look for images with 'leaflet' in the src or class, or just large images in the main container.
+        # This is a heuristic since we can't inspect directly.
         
-        # Since I can't verify selectors, I will simulate a "check" 
-        # If we were running this for real, we would put the actual selectors here.
-        # For this specific request, I will acknowledge I am using the URL but 
-        # without valid selectors, it's still a guess. 
-        # However, I will add the download logic.
+        # Strategy: Get all images, filter for likely flyer candidates (large size or specific keywords)
+        img_elements = await page.query_selector_all('img')
         
-        pass 
+        count = 1
+        for img in img_elements:
+            src = await img.get_attribute('src')
+            if src and ('jpg' in src or 'png' in src) and 'logo' not in src and 'icon' not in src:
+                # Resolve relative URLs
+                if not src.startswith('http'):
+                    src = 'https://eapp.emart.com' + src if src.startswith('/') else src
+                
+                print(f"Found potential E-mart image: {src}")
+                filename = f"emart_new_{count:02d}.jpg"
+                local_path = await download_image(session, src, filename)
+                if local_path:
+                    images.append(local_path)
+                    count += 1
+                    if count > 15: break # Limit to 15 images
 
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
@@ -53,11 +62,30 @@ async def scrape_emart(page, session):
     return images
 
 async def scrape_homeplus(page, session):
-    print("Scraping Homeplus...")
+    print(f"Scraping Homeplus from {HOMEPLUS_URL}...")
     images = []
     try:
         await page.goto(HOMEPLUS_URL, timeout=60000)
-        pass
+        await page.wait_for_load_state('networkidle')
+        
+        # Homeplus logic
+        img_elements = await page.query_selector_all('img')
+        
+        count = 1
+        for img in img_elements:
+            src = await img.get_attribute('src')
+            if src and ('leaflet' in src or 'flyer' in src or 'jpg' in src) and 'logo' not in src:
+                 if not src.startswith('http'):
+                    src = 'https://my.homeplus.co.kr' + src if src.startswith('/') else src
+                 
+                 print(f"Found potential Homeplus image: {src}")
+                 filename = f"homeplus_new_{count:02d}.jpg"
+                 local_path = await download_image(session, src, filename)
+                 if local_path:
+                    images.append(local_path)
+                    count += 1
+                    if count > 10: break
+
     except Exception as e:
         print(f"Error scraping Homeplus: {e}")
     return images
