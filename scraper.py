@@ -67,63 +67,27 @@ async def download_image(session, url, filename):
 
 async def scrape_emart(page, session):
     print(f"Scraping E-mart from {EMART_URL}...")
-    images = []
+    intercepted_urls = set()
+    
+    # Handler to capture image requests
+    def handle_response(response):
+        try:
+            url = response.url
+            content_type = response.headers.get('content-type', '')
+            if 'image' in content_type and ('jpg' in url or 'png' in url or 'jpeg' in url):
+                 # Filter out small icons/logos if possible by URL name
+                 if 'logo' not in url and 'icon' not in url and 'button' not in url:
+                    intercepted_urls.add(url)
+        except:
+            pass
+
+    # Attach handler
+    page.on("response", handle_response)
+
     try:
         await page.goto(EMART_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
         
-        # 1. Capture DOM images to find a pattern
-        img_elements = await page.query_selector_all('img')
-        base_url = None
-        dom_images = []
-        
-        for img in img_elements:
-            src = await img.get_attribute('src')
-            if src and ('jpg' in src or 'png' in src) and 'logo' not in src:
-               if not src.startswith('http'):
-                    src = 'https://eapp.emart.com' + src if src.startswith('/') else src
-               
-               try:
-                   w = await img.evaluate("el => el.naturalWidth")
-                   h = await img.evaluate("el => el.naturalHeight")
-                   if w > 500 or h > 500:
-                       dom_images.append(src)
-                       if not base_url:
-                           base_url = src
-                           print(f"Found base E-mart flyer: {base_url} ({w}x{h})")
-               except:
-                   pass
-        
-        # 2. Brute Force Pattern
-        pattern_success = False
-        if base_url:
-            match = re.search(r'(\d+)(?=\.\w+$)', base_url)
-            if match:
-                prefix = base_url[:match.start(1)]
-                suffix = base_url[match.end(1):]
-                
-                print(f"Detected pattern: {prefix}[N]{suffix}")
-                
-                count = 1
-                for i in range(1, 21):
-                    # Try different padding formats
-                    formats = [f"{i}", f"{i:02d}", f"{i:03d}"]
-                    found_this_page = False
-                    
-                    for fmt in formats:
-                        target_url = f"{prefix}{fmt}{suffix}"
-                        filename = f"emart_new_{count:02d}.jpg"
-                        
-                        local_path = await download_image(session, target_url, filename)
-                        if local_path:
-                            print(f"  > Scraped page {i} (fmt={fmt})")
-                            images.append(local_path)
-                            count += 1
-                            found_this_page = True
-                            await asyncio.sleep(0.5) # Delay
-                            break 
-                    
-                    if found_this_page:
         # Click "Next" button repeatedly to traverse all pages
         print("Traversing pages via Next button...")
         for i in range(20): # Safety limit 20 pages
@@ -132,7 +96,6 @@ async def scrape_emart(page, session):
             # Try to click next
             try:
                 # User specified: class="btn_next d-next"
-                # Use a specific selector
                 btn = await page.query_selector('.btn_next')
                 if not btn: 
                     btn = await page.query_selector('.d-next')
@@ -140,6 +103,8 @@ async def scrape_emart(page, session):
                 if btn and await btn.is_visible():
                     await btn.click()
                     print(f"  Clicked Next (Page {i+1})")
+                    # Wait for network requests to fire
+                    await page.wait_for_timeout(1500)
                 else:
                     print("  No more Next button found.")
                     break
@@ -154,16 +119,13 @@ async def scrape_emart(page, session):
         
         images = []
         count = 1
-        # Sort urls to try and maintain order.
-        # Intercepted URLs might lack order. 
-        # But usually numbers are in filename.
+        # Sort urls by length/name to approximate order
         sorted_urls = sorted(list(intercepted_urls))
         
         for src in sorted_urls:
              # Double check filter string
              if 'logo' in src or 'icon' in src: continue
              
-             # Extract filename for saving
              filename = f"emart_new_{count:02d}.jpg"
              local_path = await download_image(session, src, filename)
              if local_path:
