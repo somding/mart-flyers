@@ -124,24 +124,58 @@ async def scrape_emart(page, session):
                             break 
                     
                     if found_this_page:
-                        pattern_success = True
-        
-        # 3. Fallback: If pattern failed or returned very few, use DOM images
-        if len(images) < 2 and dom_images:
-            print("Pattern scraping yielded few results. Using fallback DOM images.")
-            count = 1
-            for src in dom_images:
-                # Deduplicate
-                if any(src in url for url in images): continue
+        # Click "Next" button repeatedly to traverse all pages
+        print("Traversing pages via Next button...")
+        for i in range(20): # Safety limit 20 pages
+            await page.wait_for_timeout(1000) # Wait for render
+            
+            # Try to click next
+            try:
+                # User specified: class="btn_next d-next"
+                # Use a specific selector
+                btn = await page.query_selector('.btn_next')
+                if not btn: 
+                    btn = await page.query_selector('.d-next')
                 
-                filename = f"emart_fallback_{count:02d}.jpg"
-                local_path = await download_image(session, src, filename)
-                if local_path:
-                    images.append(local_path)
-                    count += 1
-
+                if btn and await btn.is_visible():
+                    await btn.click()
+                    print(f"  Clicked Next (Page {i+1})")
+                else:
+                    print("  No more Next button found.")
+                    break
+            except Exception as e:
+                print(f"  Navigation finished or failed: {e}")
+                break
+        
+        # Wait a bit for last requests
+        await page.wait_for_timeout(2000)
+        
+        print(f"E-mart: Intercepted {len(intercepted_urls)} image URLs.")
+        
+        images = []
+        count = 1
+        # Sort urls to try and maintain order.
+        # Intercepted URLs might lack order. 
+        # But usually numbers are in filename.
+        sorted_urls = sorted(list(intercepted_urls))
+        
+        for src in sorted_urls:
+             # Double check filter string
+             if 'logo' in src or 'icon' in src: continue
+             
+             # Extract filename for saving
+             filename = f"emart_new_{count:02d}.jpg"
+             local_path = await download_image(session, src, filename)
+             if local_path:
+                 images.append(local_path)
+                 count += 1
+                 if count > 20: break
+                 
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
+    
+    # Detach handler
+    page.remove_listener("response", handle_response)
     
     return images
 
