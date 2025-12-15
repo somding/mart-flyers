@@ -92,6 +92,15 @@ async def download_image(session, url, filename):
                             # print(f"[-] 너무 작은 이미지 제거 ({w}x{h}): {filename}")
                             os.remove(filepath)
                             return None
+                        
+                        # [추가 필터] 스프라이트 이미지(아이콘 모음) 제거
+                        # 보통 전단지는 세로로 길거나 정사각형에 가깝습니다.
+                        # 가로가 세로보다 2배 이상 길면(W > H * 2) 아이콘 띠일 확률이 높음.
+                        if w > h * 2:
+                            print(f"[-] 스프라이트/배너로 의심되어 제거 ({w}x{h}): {filename}")
+                            os.remove(filepath)
+                            return None
+
                 except Exception:
                     os.remove(filepath)
                     return None
