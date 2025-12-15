@@ -1,0 +1,48 @@
+name: Update Flyers
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight UTC (9 AM KST)
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  update-flyers:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        playwright install chromium --with-deps
+
+    - name: Run scraper
+      run: python scraper.py
+
+    - name: Check for changes
+      id: git-check
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add .
+        if git diff --staged --quiet; then
+          echo "changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push changes
+      if: steps.git-check.outputs.changes == 'true'
+      run: |
+        git commit -m "Auto-update flyers [skip ci]"
+        git push
