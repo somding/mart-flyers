@@ -119,85 +119,87 @@ async def download_image(session, url, filename):
 
 async def scrape_emart(context, session):
     """
-    이마트 크롤링 (네트워크 가로채기 + 버튼 클릭)
+    이마트 크롤링 (순차적 DOM 수집 - 순서 보장)
     
-    전략:
-    - '.btn_next' 버튼을 반복적으로 클릭하여 모든 페이지를 로딩시킴.
-    - 페이지 로딩 중 발생하는 네트워크 요청을 가로채서(Intercept) 이미지 URL 수집.
-    - 수집된 URL들을 병렬로 일괄 다운로드.
+    기존의 네트워크 인터셉트 방식은 로딩 순서에 따라 이미지가 뒤섞이는 문제가 있었음.
+    변경: 화면에 보이는 이미지를 순서대로 가져오고, '다음' 버튼을 눌러 이동하는 방식.
     """
     print(f"[이마트] 크롤링 시작...")
     page = await context.new_page()
-    intercepted_urls = set()
-    
-    # 1. 네트워크 요청 감지 핸들러
-    def handle_response(response):
-        try:
-            url = response.url
-            content_type = response.headers.get('content-type', '')
-            # 이미지 타입이고, jpg/png 인 경우만 수집
-            if 'image' in content_type and ('jpg' in url or 'png' in url or 'jpeg' in url):
-                 # 로고, 아이콘, 버튼 등은 URL 이름으로 1차 필터링
-                 if 'logo' not in url and 'icon' not in url and 'button' not in url:
-                    intercepted_urls.add(url)
-        except:
-            pass
-
-    page.on("response", handle_response)
-
     images = []
+    
     try:
         await page.goto(EMART_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
+        await page.wait_for_timeout(2000)
         
-        # 2. '다음' 버튼 클릭하며 페이지 순회
-        print("[이마트] 페이지 순회 중 (Next 버튼 클릭)...")
-        for i in range(20): # 최대 20페이지 안전장치
-            await page.wait_for_timeout(1000) # 렌더링 대기
-            
+        # 1. 페이지 순회하며 순서대로 이미지 수집
+        print("[이마트] 페이지 순회 중 (순차 수집)...")
+        for i in range(20): # 최대 20페이지
+            # 현재 페이지에서 가장 큰 이미지 찾기 (전단지 메인 이미지)
+            # 모바일 뷰에서는 보통 전단지 이미지가 화면의 대부분을 차지함
             try:
-                # 버튼 찾기 (.btn_next 또는 .d-next 클래스)
+                # 모든 이미지 중 크기가 큰 것(500px 이상)이자 로고가 아닌 것 선별
+                visible_img_src = await page.evaluate('''() => {
+                    const imgs = Array.from(document.querySelectorAll('img'));
+                    const candidates = imgs.filter(img => {
+                        const rect = img.getBoundingClientRect();
+                        return rect.width > 300 && rect.height > 300 && 
+                               !img.src.includes('logo') && !img.src.includes('icon');
+                    });
+                    // 화면 중앙에 가까운 이미지나 첫번째 큰 이미지 반환
+                    return candidates.length > 0 ? candidates[0].src : null;
+                }''')
+
+                if visible_img_src:
+                    # 중복 체크 (이미 리스트에 있으면 추가 안 함 - 근데 버튼 눌렀는데 안 바뀌었으면 끝난 거일수도)
+                    # 하지만 이마트는 URL이 바뀜.
+                    # 다운로드 예약
+                    count = len(images) + 1
+                    filename = f"emart_new_{count:02d}.jpg"
+                    
+                    # 이미 수집된 URL인지 확인
+                    if not any(item['url'] == visible_img_src for item in images):
+                        print(f"  [이마트] {count}페이지 발견: ...{visible_img_src[-20:]}")
+                        images.append({'url': visible_img_src, 'filename': filename})
+            except Exception as e:
+                print(f"  이미지 탐색 실패: {e}")
+
+            # 다음 버튼 클릭
+            try:
                 btn = await page.query_selector('.btn_next')
                 if not btn: 
                     btn = await page.query_selector('.d-next')
                 
-                # 버튼이 있고 보이면 클릭
                 if btn and await btn.is_visible():
                     await btn.click()
-                    await page.wait_for_timeout(1000) # 요청 발생 대기
+                    await page.wait_for_timeout(1000) # 페이지 전환 대기
                 else:
-                    # 버튼 없으면 끝
+                    print("  더 이상 다음 버튼이 없습니다.")
                     break
             except Exception:
                 break
         
-        # 마지막 요청 대기
-        await page.wait_for_timeout(2000)
-        print(f"[이마트] 감지된 이미지 URL: {len(intercepted_urls)}개")
+        print(f"[이마트] 총 {len(images)}개 페이지 URL 확보.")
         
-        # 3. 수집된 URL 병렬 다운로드
+        # 2. 순서대로 다운로드 (병렬 처리하되 파일명에 번호가 있으므로 순서 유지됨)
         tasks = []
-        sorted_urls = sorted(list(intercepted_urls)) # 순서 보장을 위해 정렬
-        count = 1
+        final_paths = []
         
-        for src in sorted_urls:
-             filename = f"emart_new_{count:02d}.jpg"
-             tasks.append(download_image(session, src, filename))
-             count += 1
-             if count > 20: break
+        for item in images:
+             tasks.append(download_image(session, item['url'], item['filename']))
         
-        # asyncio.gather로 동시 실행
-        results = await asyncio.gather(*tasks)
-        
-        # 결과 중 None(실패/필터링됨) 제외
-        images = [r for r in results if r is not None]
+        if tasks:
+            results = await asyncio.gather(*tasks)
+            final_paths = [r for r in results if r is not None]
+            # 주의: gather 결과는 tasks 순서와 일치함. 즉 1페이지 -> 1번 파일 매칭됨.
 
     except Exception as e:
         print(f"[이마트] 오류 발생: {e}")
     finally:
         await page.close()
     
-    return images
+    return final_paths
 
 async def scrape_homeplus(context, session):
     """
