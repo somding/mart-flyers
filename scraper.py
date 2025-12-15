@@ -8,13 +8,10 @@ from playwright.async_api import async_playwright
 DATA_FILE = 'data.json'
 IMAGES_DIR = 'images'
 
-# URLs (Based on user input)
+# URLs
 EMART_URL = 'https://eapp.emart.com/leaflet/leafletView_EL.do'
 HOMEPLUS_URL = 'https://my.homeplus.co.kr/leaflet'
 LOTTE_URL = 'https://www.mlotte.net/leaflet?leaflet_id=2000139'
-
-import hashlib
-from PIL import Image
 
 def calculate_file_hash(filepath):
     """Calculates the MD5 hash of a file."""
@@ -29,12 +26,6 @@ def calculate_file_hash(filepath):
     except Exception as e:
         print(f"Error calculating hash for {filepath}: {e}")
         return None
-
-# ...
-
-import re
-
-# ...
 
 async def download_image(session, url, filename):
     try:
@@ -56,13 +47,11 @@ async def download_image(session, url, filename):
                     try:
                         with Image.open(filepath) as img:
                             w, h = img.size
-                            # STRICTER FILTER: 600px
+                            # STRICT FILTER: 500px
                             if w < 500 or h < 500:
-                                #print(f"Image too small ({w}x{h}): {url}")
                                 os.remove(filepath)
                                 return None
                     except Exception as e:
-                        print(f"Image open failed: {e}")
                         os.remove(filepath)
                         return None
                         
@@ -86,6 +75,7 @@ async def scrape_emart(page, session):
         # 1. Capture DOM images to find a pattern
         img_elements = await page.query_selector_all('img')
         base_url = None
+        dom_images = []
         
         for img in img_elements:
             src = await img.get_attribute('src')
@@ -97,25 +87,24 @@ async def scrape_emart(page, session):
                    w = await img.evaluate("el => el.naturalWidth")
                    h = await img.evaluate("el => el.naturalHeight")
                    if w > 500 or h > 500:
-                       base_url = src
-                       print(f"Found base E-mart flyer: {base_url} ({w}x{h})")
-                       break
+                       dom_images.append(src)
+                       if not base_url:
+                           base_url = src
+                           print(f"Found base E-mart flyer: {base_url} ({w}x{h})")
                except:
                    pass
         
         # 2. Brute Force Pattern
+        pattern_success = False
         if base_url:
-            # Match number at end or before extension
             match = re.search(r'(\d+)(?=\.\w+$)', base_url)
             if match:
-                number_str = match.group(1)
                 prefix = base_url[:match.start(1)]
                 suffix = base_url[match.end(1):]
                 
                 print(f"Detected pattern: {prefix}[N]{suffix}")
                 
                 count = 1
-                # Try pages 1 to 20
                 for i in range(1, 21):
                     # Try different padding formats
                     formats = [f"{i}", f"{i:02d}", f"{i:03d}"]
@@ -125,19 +114,31 @@ async def scrape_emart(page, session):
                         target_url = f"{prefix}{fmt}{suffix}"
                         filename = f"emart_new_{count:02d}.jpg"
                         
-                        # Use cached deduplication check if needed, but we download fresh here
                         local_path = await download_image(session, target_url, filename)
-                        
                         if local_path:
-                            print(f"  > Scraped page {i} (fmt={fmt}): {target_url}")
+                            print(f"  > Scraped page {i} (fmt={fmt})")
                             images.append(local_path)
                             count += 1
                             found_this_page = True
-                            break # Found valid image for this page index, move to next page
+                            await asyncio.sleep(0.5) # Delay
+                            break 
                     
-                    if not found_this_page:
-                        # Optional: stop if we miss too many? But better be safe and try all.
-                        pass
+                    if found_this_page:
+                        pattern_success = True
+        
+        # 3. Fallback: If pattern failed or returned very few, use DOM images
+        if len(images) < 2 and dom_images:
+            print("Pattern scraping yielded few results. Using fallback DOM images.")
+            count = 1
+            for src in dom_images:
+                # Deduplicate
+                if any(src in url for url in images): continue
+                
+                filename = f"emart_fallback_{count:02d}.jpg"
+                local_path = await download_image(session, src, filename)
+                if local_path:
+                    images.append(local_path)
+                    count += 1
 
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
@@ -154,7 +155,6 @@ async def scrape_homeplus(page, session):
         await page.wait_for_timeout(2000)
         
         img_elements = await page.query_selector_all('img')
-        
         count = 1
         for img in img_elements:
             src = await img.get_attribute('src')
@@ -162,14 +162,12 @@ async def scrape_homeplus(page, session):
                  if not src.startswith('http'):
                     src = 'https://my.homeplus.co.kr' + src if src.startswith('/') else src
                  
-                 print(f"Found potential Homeplus image: {src}")
                  filename = f"homeplus_new_{count:02d}.jpg"
                  local_path = await download_image(session, src, filename)
                  if local_path:
                     images.append(local_path)
                     count += 1
                     if count > 15: break
-
     except Exception as e:
         print(f"Error scraping Homeplus: {e}")
     return images
@@ -178,13 +176,11 @@ async def scrape_lotte(page, session):
     print(f"Scraping Lotte Mart from {LOTTE_URL}...")
     images = []
     try:
-        await page.goto(LOTTE_URL, timeout=90000) # Increased timeout
+        await page.goto(LOTTE_URL, timeout=90000)
         await page.wait_for_load_state('networkidle')
-        await page.wait_for_timeout(8000) # Wait 8 seconds for JS to load
+        await page.wait_for_timeout(8000)
         
-        # Check for both src and data-src (lazy loading)
         img_elements = await page.query_selector_all('img')
-        
         count = 1
         for img in img_elements:
             src = await img.get_attribute('src')
@@ -193,36 +189,31 @@ async def scrape_lotte(page, session):
             
             if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src:
                  if not real_src.startswith('http'):
-                    # Careful with relative path on Lotte
                     if real_src.startswith('//'):
                         real_src = 'https:' + real_src
                     elif real_src.startswith('/'):
                         real_src = 'https://www.mlotte.net' + real_src
                  
-                 print(f"Found potential Lotte image: {real_src}")
                  filename = f"lotte_new_{count:02d}.jpg"
                  local_path = await download_image(session, real_src, filename)
                  if local_path:
                     images.append(local_path)
                     count += 1
                     if count > 20: break
-
     except Exception as e:
         print(f"Error scraping Lotte: {e}")
     return images
 
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
-        # Set viewport to mobile to trigger mobile versions which often have cleaner flyers
         page = await browser.new_page(viewport={'width': 390, 'height': 844})
         
         async with aiohttp.ClientSession() as session:
-            # Load existing data
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-            # Helper to update mart data safely
             def update_mart_data(mart_index, new_images):
                 if not new_images:
                     print(f"No new images found for {data[mart_index]['name']}")
@@ -247,7 +238,7 @@ async def main():
                     if h:
                         current_hashes.append(h)
                     else:
-                        missing_files = True # Key file missing!
+                        missing_files = True 
                 
                 new_hashes = []
                 for p in new_images:
@@ -258,26 +249,19 @@ async def main():
                     if h:
                         new_hashes.append(h)
                 
-                # Check duplication
                 if current_hashes and new_hashes and current_hashes == new_hashes:
                     print(f"[{data[mart_index]['name']}] Images are content-identical. Skipping update.")
                     return
 
                 print(f"[{data[mart_index]['name']}] content changed. Updating...")
                 
-                # SAFETY CHECK: Only archive if we successfully verified current files exist
+                # SAFETY LOCK: Only archive if files exist
                 if not missing_files and current_hashes:
-                    print(f"Archiving current to past for {data[mart_index]['name']}")
                     data[mart_index]['flyers']['past']['images'] = current_image_paths
                 else:
-                    print(f"Warning: Current files missing or empty. SKIPPING ARCHIVE to protect past data.")
+                    print(f"Warning: Current files missing. SKIPPING ARCHIVE.")
                 
-                # Update current
                 data[mart_index]['flyers']['current']['images'] = new_images
-
-            # ... scraper calls ...
-
-            # ... scraper calls ...
 
             # E-mart
             new_emart = await scrape_emart(page, session)
@@ -292,7 +276,6 @@ async def main():
             new_lotte = await scrape_lotte(page, session)
             update_mart_data(2, new_lotte)
 
-            # Save updated data
             with open(DATA_FILE, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
             
