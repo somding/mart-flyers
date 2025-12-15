@@ -203,39 +203,55 @@ async def scrape_emart(context, session):
 
 async def scrape_homeplus(context, session):
     """
-    홈플러스 크롤링 (DOM 파싱)
-    전략: 스크롤을 끝까지 내려 Lazy Loading 이미지를 모두 로딩 후 img 태그 수집.
+    홈플러스 크롤링 (DOM 파싱 + 중복 제거 + 순서 보장)
     """
     print(f"[홈플러스] 크롤링 시작...")
     page = await context.new_page()
     images = []
+    
     try:
         await page.goto(HOMEPLUS_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
         
-        # 스크롤 최하단으로 이동
+        # 스크롤 최하단으로 이동 (Lazy Loading)
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         await page.wait_for_timeout(2000)
         
+        # 모든 이미지 태그 수집
         img_elements = await page.query_selector_all('img')
         
-        # URL 수집
         tasks = []
+        seen_urls = set() # 중복 방지용
         count = 1
+        
         for img in img_elements:
             src = await img.get_attribute('src')
             if src and ('leaflet' in src or 'flyer' in src or 'jpg' in src) and 'logo' not in src:
                  if not src.startswith('http'):
                     src = 'https://my.homeplus.co.kr' + src if src.startswith('/') else src
                  
+                 # 중복 제거 (URL 기준)
+                 if src in seen_urls:
+                     continue
+                 seen_urls.add(src)
+                 
+                 # 파일명에 번호 부여 (순서 유지의 핵심)
                  filename = f"homeplus_new_{count:02d}.jpg"
+                 
+                 # 튜플로 (순서, 코루틴) 저장해서 나중에 정렬할 수도 있지만
+                 # 여기서는 파일명에 순서가 있으므로 결과 파일명으로 정렬하면 됨.
                  tasks.append(download_image(session, src, filename))
+                 
                  count += 1
                  if count > 15: break
         
         if tasks:
+            # 병렬 다운로드
             results = await asyncio.gather(*tasks)
-            images = [r for r in results if r is not None]
+            # 결과(파일 경로)를 파일명 순으로 정렬 (01 -> 02 -> 03 ...)
+            # 결과 리스트에는 None이 포함될 수 있으므로 필터링 먼저 함
+            valid_results = [r for r in results if r is not None]
+            images = sorted(valid_results) # 문자열 정렬 (homeplus_new_01.jpg ...)
 
     except Exception as e:
         print(f"[홈플러스] 오류 발생: {e}")
