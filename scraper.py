@@ -203,11 +203,14 @@ async def scrape_emart(context, session):
 
 async def scrape_homeplus(context, session):
     """
-    홈플러스 크롤링 (DOM 파싱 + 중복 제거 + 순서 보장)
+    홈플러스 크롤링 (좌표 기반 정렬 + 중복 제거)
+    
+    문제: DOM 순서나 로딩 순서가 뒤죽박죽이라 페이지 순서가 섞임.
+    해결: 이미지의 화면상 Y좌표(Top)를 기준으로 정렬하여 위에서부터 차례대로 번호를 매김.
     """
     print(f"[홈플러스] 크롤링 시작...")
     page = await context.new_page()
-    images = []
+    final_images = []
     
     try:
         await page.goto(HOMEPLUS_URL, timeout=60000)
@@ -217,48 +220,73 @@ async def scrape_homeplus(context, session):
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         await page.wait_for_timeout(2000)
         
-        # 모든 이미지 태그 수집
-        img_elements = await page.query_selector_all('img')
+        # 이미지 태그와 좌표 정보를 함께 수집
+        # JavaScript로 직접 필터링 및 데이터 추출 수행
+        img_data = await page.evaluate('''() => {
+            const imgs = Array.from(document.querySelectorAll('img'));
+            return imgs.map(img => {
+                const rect = img.getBoundingClientRect();
+                return {
+                    src: img.src,
+                    top: rect.top + window.scrollY, // 절대 좌표
+                    width: rect.width,
+                    height: rect.height
+                };
+            }).filter(item => {
+                // 필터링: 크기가 적당하고, 전단지 관련 키워드가 있거나(확실치 않으면 src 검사는 완화), 로고가 아닌 것
+                // 홈플러스는 'leaflet'이나 'jpg' 등이 포함됨.
+                return item.width > 200 && 
+                       item.height > 200 &&
+                       !item.src.includes('logo') &&
+                       (item.src.includes('leaflet') || item.src.includes('flyer') || item.src.includes('jpg'));
+            });
+        }''')
         
+        # 중복 제거 및 정렬 준비
+        unique_images = []
+        seen_urls = set()
+        
+        # Y좌표 기준으로 정렬 (위 -> 아래)
+        sorted_img_data = sorted(img_data, key=lambda x: x['top'])
+        
+        for item in sorted_img_data:
+            src = item['src']
+            
+            # URL 스키마 보정
+            if not src.startswith('http'):
+               src = 'https://my.homeplus.co.kr' + src if src.startswith('/') else src
+            
+            if src in seen_urls:
+                continue
+            seen_urls.add(src)
+            unique_images.append(src)
+            
+            if len(unique_images) >= 15: # 최대 15장
+                break
+        
+        # 이제 순서대로 다운로드 작업 생성
         tasks = []
-        seen_urls = set() # 중복 방지용
         count = 1
-        
-        for img in img_elements:
-            src = await img.get_attribute('src')
-            if src and ('leaflet' in src or 'flyer' in src or 'jpg' in src) and 'logo' not in src:
-                 if not src.startswith('http'):
-                    src = 'https://my.homeplus.co.kr' + src if src.startswith('/') else src
-                 
-                 # 중복 제거 (URL 기준)
-                 if src in seen_urls:
-                     continue
-                 seen_urls.add(src)
-                 
-                 # 파일명에 번호 부여 (순서 유지의 핵심)
-                 filename = f"homeplus_new_{count:02d}.jpg"
-                 
-                 # 튜플로 (순서, 코루틴) 저장해서 나중에 정렬할 수도 있지만
-                 # 여기서는 파일명에 순서가 있으므로 결과 파일명으로 정렬하면 됨.
-                 tasks.append(download_image(session, src, filename))
-                 
-                 count += 1
-                 if count > 15: break
+        for src in unique_images:
+             filename = f"homeplus_new_{count:02d}.jpg"
+             tasks.append(download_image(session, src, filename))
+             count += 1
         
         if tasks:
-            # 병렬 다운로드
             results = await asyncio.gather(*tasks)
-            # 결과(파일 경로)를 파일명 순으로 정렬 (01 -> 02 -> 03 ...)
-            # 결과 리스트에는 None이 포함될 수 있으므로 필터링 먼저 함
+            # 다운로드는 병렬이라 순서가 섞일 수 있지만, 파일명(homeplus_new_01)은 이미 정해져 있음.
+            # 결과를 파일명 순으로 정렬하면 됨.
             valid_results = [r for r in results if r is not None]
-            images = sorted(valid_results) # 문자열 정렬 (homeplus_new_01.jpg ...)
+            final_images = sorted(valid_results)
+
+        print(f"[홈플러스] 좌표 정렬 완료. 총 {len(final_images)}장.")
 
     except Exception as e:
         print(f"[홈플러스] 오류 발생: {e}")
     finally:
         await page.close()
     
-    return images
+    return final_images
 
 async def scrape_lotte(context, session):
     """
