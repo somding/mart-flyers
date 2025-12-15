@@ -16,6 +16,20 @@ LOTTE_URL = 'https://www.mlotte.net/leaflet?leaflet_id=2000139'
 import hashlib
 from PIL import Image
 
+def calculate_file_hash(filepath):
+    """Calculates the MD5 hash of a file."""
+    hasher = hashlib.md5()
+    try:
+        with open(filepath, 'rb') as f:
+            buf = f.read()
+            hasher.update(buf)
+        return hasher.hexdigest()
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Error calculating hash for {filepath}: {e}")
+        return None
+
 # ...
 
 async def download_image(session, url, filename):
@@ -193,26 +207,6 @@ async def main():
             # Load existing data
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-
-import hashlib
-
-# ... imports ...
-
-def calculate_file_hash(filepath):
-    """Calculates the MD5 hash of a file."""
-    hasher = hashlib.md5()
-    try:
-        with open(filepath, 'rb') as f:
-            buf = f.read()
-            hasher.update(buf)
-        return hasher.hexdigest()
-    except FileNotFoundError:
-        return None
-    except Exception as e:
-        print(f"Error calculating hash for {filepath}: {e}")
-        return None
-
-# ... scrape functions ...
 
             # Helper to update mart data safely
             def update_mart_data(mart_index, new_images):
