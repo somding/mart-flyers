@@ -32,6 +32,10 @@ def calculate_file_hash(filepath):
 
 # ...
 
+import re
+
+# ...
+
 async def download_image(session, url, filename):
     try:
         async with session.get(url) as response:
@@ -45,19 +49,16 @@ async def download_image(session, url, filename):
                 # Validation
                 file_size = len(content)
                 if file_size > 1000: # 1KB
-                    # 1. Magic number check
                     if not (content.startswith(b'\xff\xd8\xff') or content.startswith(b'\x89PNG')):
-                        print(f"Invalid header: {url}")
                         os.remove(filepath)
                         return None
                     
-                    # 2. Resolution check using Pillow
                     try:
                         with Image.open(filepath) as img:
                             w, h = img.size
-                            # Reject small images (icons, buttons)
-                            if w < 400 or h < 400:
-                                print(f"Image too small ({w}x{h}): {url}")
+                            # STRICTER FILTER: 600px
+                            if w < 500 or h < 500:
+                                #print(f"Image too small ({w}x{h}): {url}")
                                 os.remove(filepath)
                                 return None
                     except Exception as e:
@@ -67,64 +68,87 @@ async def download_image(session, url, filename):
                         
                     return f"./{IMAGES_DIR}/{filename}"
                 else:
-                    print(f"File too small: {url}")
                     os.remove(filepath)
                     return None
+            else:
+                 return None
     except Exception as e:
         print(f"Download error {url}: {e}")
     return None
 
 async def scrape_emart(page, session):
     print(f"Scraping E-mart from {EMART_URL}...")
-    intercepted_urls = set()
-    
-    # Handler to capture image requests
-    def handle_response(response):
-        try:
-            url = response.url
-            content_type = response.headers.get('content-type', '')
-            if 'image' in content_type and ('jpg' in url or 'png' in url or 'jpeg' in url):
-                 # Filter out small icons/logos if possible by URL name
-                 if 'logo' not in url and 'icon' not in url and 'button' not in url:
-                    intercepted_urls.add(url)
-        except:
-            pass
-
-    # Attach handler
-    page.on("response", handle_response)
-
+    images = []
     try:
-        await page.goto(EMART_URL, timeout=90000)
+        await page.goto(EMART_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
         
-        # Slow scroll to trigger network requests
-        for i in range(10):
-            await page.evaluate("window.scrollBy(0, 800)")
-            await page.wait_for_timeout(1500)
+        # 1. Capture DOM images to find a pattern
+        img_elements = await page.query_selector_all('img')
         
-        # Detach handler (optional, but good practice)
-        page.remove_listener("response", handle_response)
+        base_url = None
         
-        print(f"E-mart: Intercepted {len(intercepted_urls)} image URLs.")
+        for img in img_elements:
+            src = await img.get_attribute('src')
+            if src and ('jpg' in src or 'png' in src) and 'logo' not in src:
+               if not src.startswith('http'):
+                    src = 'https://eapp.emart.com' + src if src.startswith('/') else src
+               
+               # Check if this is a "Main" flyer image (likely large)
+               # Use evaluate to check render size on page
+               try:
+                   w = await img.evaluate("el => el.naturalWidth")
+                   h = await img.evaluate("el => el.naturalHeight")
+                   if w > 500 or h > 500:
+                       base_url = src
+                       print(f"Found base E-mart flyer: {base_url} ({w}x{h})")
+                       break
+               except:
+                   pass
         
-        images = []
-        count = 1
-        # Sort to keep some order? Sets are unordered. Let's sort by URL length or alphabet?
-        # Actually, sorted() is enough to be deterministic.
-        for src in sorted(list(intercepted_urls)):
-             # Double check filter
-             if 'logo' in src or 'icon' in src: continue
-             
-             # Avoid duplicates
-             if any(src in url for url in images): continue
+        # 2. Brute Force Pattern
+        if base_url:
+            # Regex to find the last sequence of digits in the filename
+            # e.g., ".../leaflet_01.jpg" -> match "01"
+            match = re.search(r'(\d+)(?=\.\w+$)', base_url)
+            if match:
+                number_str = match.group(1)
+                prefix = base_url[:match.start(1)]
+                suffix = base_url[match.end(1):]
+                width = len(number_str) # Keep zero padding length
+                
+                print(f"Detected pattern: {prefix}[N]{suffix}")
+                
+                # Try to download page 1 to 20
+                count = 1
+                for i in range(1, 21):
+                    # Generate URL with zero padding
+                    # Use existing width, or at least 2
+                    pad = max(width, 2)
+                    num_formatted = f"{i:0{pad}d}"
+                    target_url = f"{prefix}{num_formatted}{suffix}"
+                    
+                    filename = f"emart_new_{count:02d}.jpg"
+                    local_path = await download_image(session, target_url, filename)
+                    
+                    # If failed, try without zero padding? e.g. 1 instead of 01
+                    if not local_path and pad > 1:
+                         target_url_alt = f"{prefix}{i}{suffix}"
+                         local_path = await download_image(session, target_url_alt, filename)
 
-             filename = f"emart_new_{count:02d}.jpg"
-             local_path = await download_image(session, src, filename)
-             if local_path:
-                 images.append(local_path)
-                 count += 1
-                 if count > 20: break
-                 
+                    if local_path:
+                        print(f"  > Scraped page {i}: {target_url}")
+                        images.append(local_path)
+                        count += 1
+                        
+                        # Avoid duplicates in list
+                        # (handled by logic)
+                    else:
+                        # If we fail inside the sequence (e.g. got 1, failed 2, maybe 3 exists?), continue?
+                        # Usually flyers differ. But if consecutive fails, stop.
+                        # Actually, let's just try all 15. The browser won't mind.
+                        pass
+                        
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
     
