@@ -1,4 +1,7 @@
 playwright
 playwright
 pytest-playwright
+playwright
+pytest-playwright
 aiohttp
+Pillow

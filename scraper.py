@@ -13,32 +13,51 @@ EMART_URL = 'https://eapp.emart.com/leaflet/leafletView_EL.do'
 HOMEPLUS_URL = 'https://my.homeplus.co.kr/leaflet'
 LOTTE_URL = 'https://www.mlotte.net/leaflet?leaflet_id=2000139'
 
+import hashlib
+from PIL import Image
+
+# ...
+
 async def download_image(session, url, filename):
     try:
         async with session.get(url) as response:
             if response.status == 200:
                 filepath = os.path.join(IMAGES_DIR, filename)
-                with open(filepath, 'wb') as f:
-                    f.write(await response.read())
+                content = await response.read()
                 
-                # Check if file is valid (not empty and is an image)
-                file_size = os.path.getsize(filepath)
-                if file_size > 1000: # At least 1KB
-                    # Verify it's a real image by checking magic numbers
-                    with open(filepath, 'rb') as f:
-                        header = f.read(4)
-                    
-                    # JPEG (FF D8 FF), PNG (89 50 4E 47)
-                    if header.startswith(b'\xff\xd8\xff') or header.startswith(b'\x89PNG'):
-                        return f"./{IMAGES_DIR}/{filename}"
-                    else:
-                        print(f"Invalid image format (not JPG/PNG): {url}")
+                with open(filepath, 'wb') as f:
+                    f.write(content)
+                
+                # Validation
+                file_size = len(content)
+                if file_size > 1000: # 1KB
+                    # 1. Magic number check
+                    if not (content.startswith(b'\xff\xd8\xff') or content.startswith(b'\x89PNG')):
+                        print(f"Invalid header: {url}")
                         os.remove(filepath)
+                        return None
+                    
+                    # 2. Resolution check using Pillow
+                    try:
+                        with Image.open(filepath) as img:
+                            w, h = img.size
+                            # Reject small images (icons, buttons)
+                            if w < 400 or h < 400:
+                                print(f"Image too small ({w}x{h}): {url}")
+                                os.remove(filepath)
+                                return None
+                    except Exception as e:
+                        print(f"Image open failed: {e}")
+                        os.remove(filepath)
+                        return None
+                        
+                    return f"./{IMAGES_DIR}/{filename}"
                 else:
-                    print(f"Downloaded file too small: {url} ({file_size} bytes)")
+                    print(f"File too small: {url}")
                     os.remove(filepath)
+                    return None
     except Exception as e:
-        print(f"Failed to download {url}: {e}")
+        print(f"Download error {url}: {e}")
     return None
 
 async def scrape_emart(page, session):
