@@ -85,7 +85,6 @@ async def scrape_emart(page, session):
         
         # 1. Capture DOM images to find a pattern
         img_elements = await page.query_selector_all('img')
-        
         base_url = None
         
         for img in img_elements:
@@ -94,8 +93,6 @@ async def scrape_emart(page, session):
                if not src.startswith('http'):
                     src = 'https://eapp.emart.com' + src if src.startswith('/') else src
                
-               # Check if this is a "Main" flyer image (likely large)
-               # Use evaluate to check render size on page
                try:
                    w = await img.evaluate("el => el.naturalWidth")
                    h = await img.evaluate("el => el.naturalHeight")
@@ -108,47 +105,40 @@ async def scrape_emart(page, session):
         
         # 2. Brute Force Pattern
         if base_url:
-            # Regex to find the last sequence of digits in the filename
-            # e.g., ".../leaflet_01.jpg" -> match "01"
+            # Match number at end or before extension
             match = re.search(r'(\d+)(?=\.\w+$)', base_url)
             if match:
                 number_str = match.group(1)
                 prefix = base_url[:match.start(1)]
                 suffix = base_url[match.end(1):]
-                width = len(number_str) # Keep zero padding length
                 
                 print(f"Detected pattern: {prefix}[N]{suffix}")
                 
-                # Try to download page 1 to 20
                 count = 1
+                # Try pages 1 to 20
                 for i in range(1, 21):
-                    # Generate URL with zero padding
-                    # Use existing width, or at least 2
-                    pad = max(width, 2)
-                    num_formatted = f"{i:0{pad}d}"
-                    target_url = f"{prefix}{num_formatted}{suffix}"
+                    # Try different padding formats
+                    formats = [f"{i}", f"{i:02d}", f"{i:03d}"]
+                    found_this_page = False
                     
-                    filename = f"emart_new_{count:02d}.jpg"
-                    local_path = await download_image(session, target_url, filename)
-                    
-                    # If failed, try without zero padding? e.g. 1 instead of 01
-                    if not local_path and pad > 1:
-                         target_url_alt = f"{prefix}{i}{suffix}"
-                         local_path = await download_image(session, target_url_alt, filename)
-
-                    if local_path:
-                        print(f"  > Scraped page {i}: {target_url}")
-                        images.append(local_path)
-                        count += 1
+                    for fmt in formats:
+                        target_url = f"{prefix}{fmt}{suffix}"
+                        filename = f"emart_new_{count:02d}.jpg"
                         
-                        # Avoid duplicates in list
-                        # (handled by logic)
-                    else:
-                        # If we fail inside the sequence (e.g. got 1, failed 2, maybe 3 exists?), continue?
-                        # Usually flyers differ. But if consecutive fails, stop.
-                        # Actually, let's just try all 15. The browser won't mind.
+                        # Use cached deduplication check if needed, but we download fresh here
+                        local_path = await download_image(session, target_url, filename)
+                        
+                        if local_path:
+                            print(f"  > Scraped page {i} (fmt={fmt}): {target_url}")
+                            images.append(local_path)
+                            count += 1
+                            found_this_page = True
+                            break # Found valid image for this page index, move to next page
+                    
+                    if not found_this_page:
+                        # Optional: stop if we miss too many? But better be safe and try all.
                         pass
-                        
+
     except Exception as e:
         print(f"Error scraping E-mart: {e}")
     
@@ -241,28 +231,26 @@ async def main():
                 current_flyer_data = data[mart_index]['flyers']['current']
                 current_image_paths = current_flyer_data.get('images', [])
 
-                # strip query params if any (e.g. ?v=2)
                 clean_current_paths = []
                 for p in current_image_paths:
-                    clean_p = p.split('?')[0] # remove query param
-                    # Ensure path is relative to script execution
+                    clean_p = p.split('?')[0]
                     if clean_p.startswith('./'):
-                        clean_p = clean_p[2:] # remove ./
+                        clean_p = clean_p[2:]
                     if clean_p.startswith('/'):
                         clean_p = clean_p[1:]
                     clean_current_paths.append(clean_p)
 
-                # Calculate hashes for current images
                 current_hashes = []
+                missing_files = False
                 for p in clean_current_paths:
                     h = calculate_file_hash(p)
                     if h:
                         current_hashes.append(h)
+                    else:
+                        missing_files = True # Key file missing!
                 
-                # Calculate hashes for new images
                 new_hashes = []
                 for p in new_images:
-                    # new_images are returned as "./images/..."
                     clean_p = p
                     if clean_p.startswith('./'):
                         clean_p = clean_p[2:]
@@ -270,19 +258,24 @@ async def main():
                     if h:
                         new_hashes.append(h)
                 
-                # STRICT COMPARISON
+                # Check duplication
                 if current_hashes and new_hashes and current_hashes == new_hashes:
                     print(f"[{data[mart_index]['name']}] Images are content-identical. Skipping update.")
                     return
 
                 print(f"[{data[mart_index]['name']}] content changed. Updating...")
                 
-                # Only archive if we have valid current images
-                if current_image_paths:
+                # SAFETY CHECK: Only archive if we successfully verified current files exist
+                if not missing_files and current_hashes:
+                    print(f"Archiving current to past for {data[mart_index]['name']}")
                     data[mart_index]['flyers']['past']['images'] = current_image_paths
+                else:
+                    print(f"Warning: Current files missing or empty. SKIPPING ARCHIVE to protect past data.")
                 
                 # Update current
                 data[mart_index]['flyers']['current']['images'] = new_images
+
+            # ... scraper calls ...
 
             # ... scraper calls ...
 
