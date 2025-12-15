@@ -237,14 +237,6 @@ def calculate_file_hash(filepath):
                 # Calculate hashes for current images
                 current_hashes = []
                 for p in clean_current_paths:
-                    # Construct full path. Assuming IMAGES_DIR is 'images'
-                    # But images/ is hardcoded in data.json as ./images/...
-                    # We need to find the file in 'images' dir.
-                    # The paths in data.json are relative to web root.
-                    # Locally scraping runs in root.
-                    # So 'images/filename.jpg' should be valid.
-                    
-                    # If file doesn't exist (e.g. deleted or placeholder), hash is None
                     h = calculate_file_hash(p)
                     if h:
                         current_hashes.append(h)
@@ -261,8 +253,6 @@ def calculate_file_hash(filepath):
                         new_hashes.append(h)
                 
                 # STRICT COMPARISON
-                # Compare sets of hashes to ignore order? Or list to enforce order?
-                # Flyers usually have order. Let's compare lists.
                 if current_hashes and new_hashes and current_hashes == new_hashes:
                     print(f"[{data[mart_index]['name']}] Images are content-identical. Skipping update.")
                     return
