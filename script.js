@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('hidden');
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
+
+        // Add history state
+        history.pushState({ modal: true }, '', window.location.pathname);
     }
 
     function switchTab(tab) {
@@ -106,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tabPast.addEventListener('click', () => switchTab('past'));
 
-    function closeModal() {
+    // Hide Modal UI (Actual closing logic)
+    function hideModalUI() {
         modal.classList.remove('show');
         setTimeout(() => {
             modal.classList.add('hidden');
@@ -115,7 +119,30 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = '';
     }
 
+    // Trigger History Back (User Action)
+    function closeModal() {
+        // Only go back if we have a state to go back to (simple check)
+        // Or just go back, assuming openModal pushed one.
+        if (history.state && history.state.modal) {
+            history.back();
+        } else {
+            // Fallback if no history state (e.g. refresh)
+            hideModalUI();
+        }
+    }
+
+    // Handle Hardware Back Button
+    window.addEventListener('popstate', (event) => {
+        // If back button pressed, and we were in modal state (now popped), just hide UI
+        // Actually, if we pressed back, we are now in "null" state (or previous).
+        // So we should just close the modal if it is open.
+        if (modal.classList.contains('show')) {
+            hideModalUI();
+        }
+    });
+
     if (closeButton) {
+        // Use closeModal to trigger history.back()
         closeButton.addEventListener('click', closeModal);
     }
 
