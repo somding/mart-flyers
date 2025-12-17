@@ -14,7 +14,8 @@
                     "./images/emart_new_04.jpg",
                     "./images/emart_new_05.jpg",
                     "./images/emart_new_06.jpg",
-                    "./images/emart_new_07.jpg"
+                    "./images/emart_new_07.jpg",
+                    "./images/emart_new_08.jpg"
                 ],
                 "type": "image"
             },
@@ -27,8 +28,7 @@
                     "./images/emart_new_04.jpg",
                     "./images/emart_new_05.jpg",
                     "./images/emart_new_06.jpg",
-                    "./images/emart_new_07.jpg",
-                    "./images/emart_new_08.jpg"
+                    "./images/emart_new_07.jpg"
                 ],
                 "type": "image"
             }
