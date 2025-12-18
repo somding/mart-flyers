@@ -26,12 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
         marts.forEach(mart => {
             const card = document.createElement('div');
             card.className = 'mart-card';
+
+            // 이름 분리 (한글 / 영문)
+            // 예: "이마트 (E-mart)" -> "이마트", "E-mart"
+            let nameHtml = mart.name;
+            const match = mart.name.match(/([^(]+)\s*\(([^)]+)\)/);
+            if (match) {
+                nameHtml = `<span class="name-ko">${match[1].trim()}</span><span class="name-en">${match[2].trim()}</span>`;
+            }
+
             card.innerHTML = `
                 <div class="mart-logo-area">
                     <img src="${mart.logo}" alt="${mart.name}" class="mart-logo">
                 </div>
                 <div class="mart-info">
-                    <h3 class="mart-name">${mart.name}</h3>
+                    <h3 class="mart-name">${nameHtml}</h3>
                     <p class="mart-desc">${mart.description}</p>
                     <a href="#" class="view-btn">전단지 보기</a>
                 </div>
@@ -49,7 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Logic
     function openModal(mart) {
         currentMart = mart;
-        modalTitle.textContent = mart.name;
+
+        let nameHtml = mart.name;
+        const match = mart.name.match(/([^(]+)\s*\(([^)]+)\)/);
+        if (match) {
+            nameHtml = `<span class="name-ko">${match[1].trim()}</span> <span class="name-en-modal" style="font-size:0.6em; color:#666;">${match[2].trim()}</span>`;
+        }
+        modalTitle.innerHTML = nameHtml;
 
         // Reset to Current Tab
         switchTab('current');

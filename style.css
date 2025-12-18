@@ -173,18 +173,38 @@ body {
 .mart-name {
     font-size: 1.8rem;
     font-weight: 900;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     color: black;
     text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.name-ko {
+    display: block;
+    font-size: 1.1em;
+    /* 부모 대비 약간 큼 */
+    letter-spacing: -1px;
+}
+
+.name-en {
+    display: block;
+    font-size: 0.6em;
+    /* 작게 */
+    color: #555;
+    font-weight: 700;
+    margin-top: 4px;
+    letter-spacing: 0;
 }
 
 .mart-desc {
-    font-size: 1rem;
-    color: #333;
+    font-size: 0.95rem;
+    color: #444;
     margin-bottom: 25px;
     font-weight: 500;
     line-height: 1.5;
     flex-grow: 1;
+    word-break: keep-all;
+    /* 한글 줄바꿈 개선 */
 }
 
 .view-btn {
@@ -318,12 +338,32 @@ body {
 }
 
 .flyer-img {
+    width: 100%;
+    /* 부모 너비에 꽉 차게 */
     max-width: 100%;
+    /* 화면 밖으로 나가지 않게 */
     height: auto;
     display: block;
-    margin: 0 auto 20px;
-    border: 3px solid black;
-    box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.2);
+    margin: 0 auto 10px;
+    /* 간격 축소 */
+    border: none;
+    /* 테두리 제거 (이미지 자체로 꽉 차게) -> 사용자 요청 반영 */
+    /* border: 3px solid black; */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 모바일 등 작은 화면에서 마진 제거하여 더 넓게 보여줌 */
+@media (max-width: 600px) {
+    .flyer-container {
+        padding: 0;
+        /* 패딩 제거 */
+    }
+
+    .flyer-img {
+        margin-bottom: 5px;
+        box-shadow: none;
+        /* 모바일 성능 최적화 */
+    }
 }
 
 /* Responsive */
