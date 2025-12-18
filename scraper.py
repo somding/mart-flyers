@@ -288,8 +288,8 @@ async def scrape_homeplus(context, session):
 
 async def scrape_lotte(context, session):
     """
-    롯데마트 크롤링 (단순 DOM 파싱 - 원복)
-    복잡한 JS 로직 제거하고 가장 기초적인 방식으로 복귀.
+    롯데마트 크롤링 (iframe 탐색 지원)
+    전단지 콘텐츠가 iframe 내부에 있을 가능성을 대비하여 모든 프레임을 순회함.
     """
     print(f"[롯데마트] 크롤링 시작...")
     page = await context.new_page()
@@ -298,49 +298,73 @@ async def scrape_lotte(context, session):
     try:
         await page.goto(LOTTE_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
-        await page.wait_for_timeout(6000) # 로딩 대기 시간 증가
+        await page.wait_for_timeout(6000)
         
-        # 스크롤 최하단으로 이동
-        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        await page.wait_for_timeout(3000)
+        # 1. 메인 프레임 스크롤
+        try:
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        except:
+            pass
+        await page.wait_for_timeout(2000)
         
-        img_elements = await page.query_selector_all('img')
-        
-        tasks = []
+        unique_images_map = {} # URL: filename
         seen_urls = set()
         count = 1
         
-        for img in img_elements:
-            src = await img.get_attribute('src')
-            data_src = await img.get_attribute('data-src')
-            real_src = data_src or src # data-src 우선
+        # 2. 모든 프레임 순회 (Main Frame + iframes)
+        print(f"[롯데마트] 프레임 탐색 중 (총 {len(page.frames)}개)...")
+        
+        for frame in page.frames:
+            try:
+                # 프레임 내부 스크롤 시도
+                await frame.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                await page.wait_for_timeout(500)
+                
+                # 프레임 내부 이미지 수집
+                img_elements = await frame.query_selector_all('img')
+                if not img_elements:
+                    continue
+                
+                print(f"  - 프레임 {frame.name}: {len(img_elements)}개 이미지 발견")
+                
+                for img in img_elements:
+                    src = await img.get_attribute('src')
+                    data_src = await img.get_attribute('data-src')
+                    real_src = data_src or src
+                    
+                    if real_src and 'logo' not in real_src and 'icon' not in real_src:
+                        if not real_src.startswith('http'):
+                            if real_src.startswith('//'):
+                                real_src = 'https:' + real_src
+                            elif real_src.startswith('/'):
+                                real_src = 'https://www.mlotte.net' + real_src
+                        
+                        if real_src not in seen_urls:
+                            seen_urls.add(real_src)
+                            # 임시 저장
+                            unique_images_map[real_src] = f"lotte_new_{count:02d}.jpg"
+                            count += 1
+                            if count > 25: break
+            except Exception as e:
+                # 프레임 접근 제한 등으로 실패할 수 있음
+                continue
             
-            # URL 문자열 필터 대폭 완화 (확장자 검사 제거)
-            if real_src and 'logo' not in real_src and 'icon' not in real_src:
-                 # 상대 경로 처리
-                 if not real_src.startswith('http'):
-                    if real_src.startswith('//'):
-                        real_src = 'https:' + real_src
-                    elif real_src.startswith('/'):
-                        real_src = 'https://www.mlotte.net' + real_src
-                 
-                 # 중복 제거
-                 if real_src in seen_urls:
-                     continue
-                 seen_urls.add(real_src)
-                 
-                 filename = f"lotte_new_{count:02d}.jpg"
-                 tasks.append(download_image(session, real_src, filename))
-                 count += 1
-                 if count > 20: break
+            if count > 20: break
+            
+        # 3. 다운로드
+        tasks = []
+        # 순서 보장을 위해 정렬된 키 순서가 아니라, 발견된 순서(count)대로 하거나
+        # 여기선 이미 unique_images_map에 넣은 순서가 발견 순서임.
+        
+        for src, filename in unique_images_map.items():
+             tasks.append(download_image(session, src, filename))
         
         if tasks:
-            print(f"[롯데마트] {len(tasks)}개 이미지 발견. 다운로드 시작.")
+            print(f"[롯데마트] 총 {len(tasks)}개 유효 이미지 다운로드 시도.")
             results = await asyncio.gather(*tasks)
-            images = [r for r in results if r is not None]
-            # 단순 방식은 파일명 순서 정렬을 따로 안 해도 gathered result가 task 순서를 따름
-            # 하지만 안전하게 정렬은 한 번 해줌
-            images = sorted(images)
+            # 결과 필터링 및 정렬
+            valid_results = [r for r in results if r is not None]
+            images = sorted(valid_results) 
 
     except Exception as e:
         print(f"[롯데마트] 오류 발생: {e}")
