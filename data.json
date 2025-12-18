@@ -18,8 +18,7 @@
                     "./images/emart_new_08.jpg",
                     "./images/emart_new_09.jpg",
                     "./images/emart_new_10.jpg",
-                    "./images/emart_new_11.jpg",
-                    "./images/emart_new_12.jpg"
+                    "./images/emart_new_11.jpg"
                 ],
                 "type": "image"
             },
@@ -36,7 +35,8 @@
                     "./images/emart_08.jpg",
                     "./images/emart_09.jpg",
                     "./images/emart_10.jpg",
-                    "./images/emart_11.jpg"
+                    "./images/emart_11.jpg",
+                    "./images/emart_12.jpg"
                 ],
                 "type": "image"
             }
@@ -50,7 +50,18 @@
         "flyers": {
             "current": {
                 "title": "최신 전단지 보기",
-                "images": [],
+                "images": [
+                    "./images/homeplus_new_01.jpg",
+                    "./images/homeplus_new_02.jpg",
+                    "./images/homeplus_new_03.jpg",
+                    "./images/homeplus_new_04.jpg",
+                    "./images/homeplus_new_05.jpg",
+                    "./images/homeplus_new_06.jpg",
+                    "./images/homeplus_new_07.jpg",
+                    "./images/homeplus_new_08.jpg",
+                    "./images/homeplus_new_09.jpg",
+                    "./images/homeplus_new_10.jpg"
+                ],
                 "type": "image"
             },
             "past": {
