@@ -75,12 +75,7 @@
                     "./images/homeplus_07.jpg",
                     "./images/homeplus_08.jpg",
                     "./images/homeplus_09.jpg",
-                    "./images/homeplus_10.jpg",
-                    "./images/homeplus_11.jpg",
-                    "./images/homeplus_12.jpg",
-                    "./images/homeplus_13.jpg",
-                    "./images/homeplus_14.jpg",
-                    "./images/homeplus_15.jpg"
+                    "./images/homeplus_10.jpg"
                 ],
                 "type": "image"
             }
@@ -112,7 +107,9 @@
                     "./images/lotte_02.jpg",
                     "./images/lotte_03.jpg",
                     "./images/lotte_04.jpg",
-                    "./images/lotte_05.jpg"
+                    "./images/lotte_05.jpg",
+                    "./images/lotte_06.jpg",
+                    "./images/lotte_07.jpg"
                 ],
                 "type": "image"
             }
