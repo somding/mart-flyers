@@ -2,15 +2,16 @@
    STYLE.CSS (Premium Dark Mode)
    ========================================= */
 
-/* 1. Font Import (SUITE - Noonnu Stable CDN) */
-@font-face {
-    font-family: 'SUITE';
-    font-weight: 300 900;
-    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/SUITE-Regular.woff2') format('woff2');
-}
+/* 1. Font Import: SUITE (Variable) & Pretendard */
+@import url("https://cdn.jsdelivr.net/gh/sun-typeface/SUITE/fonts/variable/woff2/SUITE.css");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
 /* 2. Variables (Dark Theme) */
 :root {
+    /* Font Stack Update: SUITE -> Pretendard -> System */
+    --font-heading: 'SUITE', 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    --font-body: 'SUITE', 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+
     --text-main: #ffffff;
     --text-sub: #a1a1a6;
     /* iOS Gray */
@@ -29,8 +30,7 @@
     --radius: 28px;
 
     /* 폰트 스택 */
-    --font-heading: 'SUITE', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    --font-body: 'SUITE', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
 }
 
 /* 3. Global Reset */
