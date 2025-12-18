@@ -107,11 +107,6 @@ async def download_image(session, url, filename):
                 return f"./{IMAGES_DIR}/{filename}"
             else:
                  return None
-                    
-                # 성공 시 경로 반환
-                return f"./{IMAGES_DIR}/{filename}"
-            else:
-                 return None
     except Exception as e:
         print(f"[-] 다운로드 실패 {url}: {e}")
     return None
