@@ -298,9 +298,6 @@ async def scrape_lotte(context, session):
     try:
         await page.goto(LOTTE_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
-    try:
-        await page.goto(LOTTE_URL, timeout=60000)
-        await page.wait_for_load_state('networkidle')
         await page.wait_for_timeout(6000) # 로딩 대기 시간 증가
         
         # 스크롤 최하단으로 이동
