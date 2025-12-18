@@ -2,7 +2,7 @@ name: Update Flyers
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Run daily at midnight UTC (9 AM KST)
+    - cron: '0 * * * *' # Run hourly
   workflow_dispatch:      # Allow manual trigger
 
 jobs:
