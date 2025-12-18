@@ -352,6 +352,26 @@ async def scrape_lotte(context, session):
             
             if len(unique_images) >= 20: break
             
+        if not unique_images:
+            print("[롯데마트] JS 추출 실패 또는 이미지 없음. 2차 시도 (기본 선택자)...")
+            img_elements = await page.query_selector_all('img')
+            for img in img_elements:
+                src = await img.get_attribute('src')
+                data_src = await img.get_attribute('data-src')
+                real_src = data_src or src
+                
+                if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src and 'icon' not in real_src:
+                     if not real_src.startswith('http'):
+                        if real_src.startswith('//'):
+                            real_src = 'https:' + real_src
+                        elif real_src.startswith('/'):
+                            real_src = 'https://www.mlotte.net' + real_src
+                     
+                     if real_src not in seen_urls:
+                         seen_urls.add(real_src)
+                         unique_images.append(real_src)
+                         if len(unique_images) >= 20: break
+        
         print(f"[롯데마트] 발견된 유효 이미지: {len(unique_images)}장")
         
         # 다운로드 실행
@@ -381,9 +401,14 @@ async def scrape_lotte(context, session):
 
 async def main():
     async with async_playwright() as p:
-        # 모바일 뷰포트로 브라우저 실행 (모바일 페이지가 구조가 단순함)
+        # 모바일 환경 흉내 (User-Agent 설정 필수)
         browser = await p.chromium.launch()
-        context = await browser.new_context(viewport={'width': 390, 'height': 844})
+        context = await browser.new_context(
+            viewport={'width': 390, 'height': 844},
+            user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            locale='ko-KR',
+            timezone_id='Asia/Seoul'
+        )
         
         async with aiohttp.ClientSession() as session:
             # 1. 기존 데이터 로드
