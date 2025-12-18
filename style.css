@@ -40,6 +40,7 @@ body {
 }
 
 /* Dedicated Background Element - 무조건 보이게 */
+/* Dedicated Background Element - 무조건 보이게 */
 .bg-aurora {
     position: fixed;
     top: 0;
@@ -47,60 +48,31 @@ body {
     width: 100%;
     height: 100vh;
     z-index: -1;
-    overflow: hidden;
-    background: #f5f5f7;
-    /* Base color */
+    /* Vibrant Mesh Gradient */
+    background:
+        radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+    background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fad0c4, #a18cd1, #fbc2eb);
+    background-size: 300% 300%;
+    animation: gradientBG 12s ease infinite;
+    opacity: 1;
+    /* 투명도 제거 */
 }
 
-.bg-aurora::before {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 60vw;
-    height: 60vw;
-    background: radial-gradient(circle, rgba(255, 182, 193, 0.6), rgba(221, 160, 221, 0.5), transparent 70%);
-    filter: blur(80px);
-    animation: float 15s infinite ease-in-out;
-}
+/* 추가적인 질감 (Noise) - 선택사항이나 일단 생략 */
 
-.bg-aurora::after {
-    content: '';
-    position: absolute;
-    bottom: -10%;
-    right: -10%;
-    width: 70vw;
-    height: 70vw;
-    background: radial-gradient(circle, rgba(135, 206, 235, 0.6), rgba(176, 224, 230, 0.5), transparent 70%);
-    filter: blur(80px);
-    animation: float-reverse 18s infinite ease-in-out;
-}
-
-@keyframes float {
+@keyframes gradientBG {
     0% {
-        transform: translate(0, 0);
+        background-position: 0% 50%;
     }
 
     50% {
-        transform: translate(100px, 50px);
+        background-position: 100% 50%;
     }
 
     100% {
-        transform: translate(0, 0);
-    }
-}
-
-@keyframes float-reverse {
-    0% {
-        transform: translate(0, 0);
-    }
-
-    50% {
-        transform: translate(-80px, -40px);
-    }
-
-    100% {
-        transform: translate(0, 0);
+        background-position: 0% 50%;
     }
 }
 
@@ -111,60 +83,85 @@ body {
 }
 
 /* Glass Header */
+/* Glass Header */
 .header {
     position: sticky;
     top: 0;
     z-index: 100;
     padding: 24px 0;
-    background: rgba(251, 251, 253, 0.7);
-    /* Translucent */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    background: rgba(255, 255, 255, 0.75);
+    /* 조금 더 진하게 */
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    /* 약간의 그림자 */
     text-align: center;
     transition: all 0.3s ease;
 }
 
 .header h1 {
     font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 2.2rem;
-    color: var(--text-main);
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    font-size: 2.8rem;
+    /* 사이즈 업 */
+    letter-spacing: -0.03em;
     margin-bottom: 8px;
+
+    /* Gradient Text */
+    background: linear-gradient(135deg, #333 0%, #000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #1d1d1f;
+
+    /* 미세한 그림자 */
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .header p {
-    font-size: 1rem;
-    color: var(--text-sub);
-    font-weight: 500;
+    font-size: 1.1rem;
+    color: rgba(60, 60, 67, 0.8);
+    font-weight: 600;
 }
 
 /* Mart Grid */
+/* Mart Grid */
 .mart-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 40px;
+    /* 간격 넓힘 */
     padding: 60px 0 100px;
 }
 
 .mart-card {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-soft);
-    border: var(--glass-border);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.85);
+    /* 배경색 불투명도 증가 */
+    border-radius: 32px;
+    /* 더 둥글게 */
+    box-shadow:
+        0 10px 30px -5px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    /* 내부 광택 */
+    border: none;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* 탄성 애니메이션 */
     cursor: pointer;
     display: flex;
     flex-direction: column;
 }
 
 .mart-card:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-hover);
+    transform: translateY(-12px) scale(1.02);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow:
+        0 30px 60px -12px rgba(50, 50, 93, 0.25),
+        0 18px 36px -18px rgba(0, 0, 0, 0.3);
+    z-index: 10;
 }
 
 .mart-logo-area {
