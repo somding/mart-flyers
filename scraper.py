@@ -415,13 +415,49 @@ async def main():
                 current_flyer = data[mart_index]['flyers']['current']
                 current_files = [p.split('?')[0].replace('./', '') for p in current_flyer.get('images', [])]
 
-                # 해시 비교
-                temp_hashes = [calculate_file_hash(p) for p in temp_files]
-                current_hashes = [calculate_file_hash(p) for p in current_files]
+                # 해시 비교 대신 '파일 유사도' 비교 (Size & Resolution)
+                # 재압축으로 인한 미세한 바이너리 차이를 무시하기 위함
                 
-                # 중복 검사 (해시 리스트가 완전히 같으면 변경 없음)
-                if temp_hashes and current_hashes and temp_hashes == current_hashes:
-                    print(f"[{mart_name}] 변경 사항 없음. 임시 파일 삭제.")
+                def is_image_different(path1, path2):
+                    if not os.path.exists(path1) or not os.path.exists(path2):
+                        return True # 파일 없으면 다름
+                    
+                    try:
+                        # 1. 파일 크기 비교 (오차 3% 이내면 같다고 간주)
+                        size1 = os.path.getsize(path1)
+                        size2 = os.path.getsize(path2)
+                        
+                        # 0바이트 파일 처리
+                        if size1 == 0 or size2 == 0: return True
+                        
+                        diff_ratio = abs(size1 - size2) / max(size1, size2)
+                        if diff_ratio < 0.03: # 3% 미만 차이
+                            # 크기가 비슷하면 해상도까지 확인 (확실하게)
+                            with Image.open(path1) as img1, Image.open(path2) as img2:
+                                if img1.size == img2.size:
+                                    return False # 크기도 비슷하고 해상도도 같음 -> 같은 파일로 취급
+                        
+                        return True # 차이가 크므로 다른 파일
+                    except Exception:
+                        return True # 에러 나면 그냥 다르다고 침
+
+                # 전체 리스트 비교
+                is_modified = False
+                
+                # 개수가 다르면 무조건 변경
+                if len(temp_files) != len(current_files):
+                    is_modified = True
+                    print(f"[{mart_name}] 이미지 개수 변경 ({len(current_files)} -> {len(temp_files)})")
+                else:
+                    # 개수 같으면 하나씩 비교
+                    for t_path, c_path in zip(temp_files, current_files):
+                        if is_image_different(t_path, c_path):
+                            is_modified = True
+                            print(f"[{mart_name}] 이미지 변경 감지: {c_path} vs {t_path}")
+                            break
+                
+                if not is_modified:
+                    print(f"[{mart_name}] 변경 사항 없음 (유사 이미지). 임시 파일 삭제.")
                     for p in temp_files:
                         if os.path.exists(p): os.remove(p)
                     return
