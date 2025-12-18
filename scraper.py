@@ -155,7 +155,7 @@ async def scrape_emart(context, session):
                     # 하지만 이마트는 URL이 바뀜.
                     # 다운로드 예약
                     count = len(images) + 1
-                    filename = f"emart_new_{count:02d}.jpg"
+                    filename = f"temp_emart_{count:02d}.jpg"
                     
                     # 이미 수집된 URL인지 확인
                     if not any(item['url'] == visible_img_src for item in images):
@@ -267,7 +267,7 @@ async def scrape_homeplus(context, session):
         tasks = []
         count = 1
         for src in unique_images:
-             filename = f"homeplus_new_{count:02d}.jpg"
+             filename = f"temp_homeplus_{count:02d}.jpg"
              tasks.append(download_image(session, src, filename))
              count += 1
         
@@ -332,9 +332,11 @@ async def scrape_lotte(context, session):
                      continue
                  seen_urls.add(real_src)
                  
-                 filename = f"lotte_new_{count:02d}.jpg"
-                 tasks.append(download_image(session, real_src, filename))
-                 count += 1
+                 # Check if the image source contains 'jpg' or 'png'
+                 if 'jpg' in real_src or 'png' in real_src:
+                    filename = f"temp_lotte_{count:02d}.jpg"
+                    tasks.append(download_image(session, real_src, filename))
+                    count += 1
                  if count > 20: break
         
         if tasks:
@@ -389,72 +391,87 @@ async def main():
                     return
 
                 # 현재 저장된 이미지들의 파일 존재 여부 및 해시 확인
+                # 1. 파일명 접두사 설정 (임시 파일 -> 최종 목표 파일)
+                # target_prefix: "emart_new_" (최신), archive_prefix: "emart_" (과거)
+                if mart_name.startswith('이마트'):
+                    prefix = 'emart'
+                elif mart_name.startswith('홈플러스'):
+                    prefix = 'homeplus'
+                else:
+                    prefix = 'lotte'
+                
+                # 임시 파일 목록 (temp_...)
+                temp_files = [p.replace('./', '') for p in new_images]
+                
+                # 현재 파일 목록 (기존 _new_...)
                 current_flyer = data[mart_index]['flyers']['current']
-                current_paths = [p.split('?')[0].replace('./', '') for p in current_flyer.get('images', [])]
+                current_files = [p.split('?')[0].replace('./', '') for p in current_flyer.get('images', [])]
+
+                # 해시 비교
+                temp_hashes = [calculate_file_hash(p) for p in temp_files]
+                current_hashes = [calculate_file_hash(p) for p in current_files]
                 
-                current_hashes = []
-                missing_files = False # 로컬 파일 유실 여부 플래그
-                
-                for p in current_paths:
-                    h = calculate_file_hash(p)
-                    if h:
-                        current_hashes.append(h)
-                    else:
-                        missing_files = True 
-                
-                # 새 이미지들의 해시 계산
-                new_hashes = []
-                for p in new_images:
-                    h = calculate_file_hash(p.replace('./', ''))
-                    if h:
-                        new_hashes.append(h)
-                
-                # 중복 검사 (내용이 100% 똑같으면 업데이트 안 함)
-                if current_hashes and new_hashes and current_hashes == new_hashes:
-                    print(f"[{mart_name}] 변경 사항 없음 (이미지 내용 동일).")
+                # 중복 검사 (해시 리스트가 완전히 같으면 변경 없음)
+                if temp_hashes and current_hashes and temp_hashes == current_hashes:
+                    print(f"[{mart_name}] 변경 사항 없음. 임시 파일 삭제.")
+                    for p in temp_files:
+                        if os.path.exists(p): os.remove(p)
                     return
 
-                print(f"[{mart_name}] 업데이트 진행!")
+                print(f"[{mart_name}] 새로운 전단지 감지! 업데이트 시작.")
                 
-                # [핵심 수정] 아카이빙 시 파일 분리 (Current -> Past 파일 복사)
-                # 그냥 리스트만 옮기면, 나중에 _new_ 파일이 덮어씌워질 때 Past 데이터도 변해버림.
-                # 따라서 _new_ 파일을 _(old)_ 파일로 복사해서 보존해야 함.
-                
-                import shutil
-                
-                if not missing_files and current_hashes:
-                    past_images_list = []
-                    for src_path in current_flyer.get('images', []):
-                        # 경로: ./images/emart_new_01.jpg -> ./images/emart_01.jpg
-                        # _new_를 제거하여 과거 파일명 생성
-                        if '_new_' in src_path:
-                            dst_path = src_path.replace('_new_', '_')
-                        else:
-                            # 만약 _new_가 없다면 접미사 추가 등으로 충돌 방지
-                            dst_path = src_path.replace('.jpg', '_past.jpg')
-                            
-                        # 실제 파일 복사 (물리적 백업)
-                        real_src = src_path.replace('./', '')
-                        real_dst = dst_path.replace('./', '')
+                # 1. 아카이빙 (Current -> Past)
+                # 기존의 _new_ 파일들을 _(past) 로 이름 변경하여 보존
+                archived_files = []
+                if current_files:
+                    for old_path in current_files:
+                        if not os.path.exists(old_path): continue
                         
+                        # emart_new_01.jpg -> emart_01.jpg
+                        if '_new_' in old_path:
+                            new_path = old_path.replace('_new_', '_')
+                        else:
+                            new_path = old_path.replace('.jpg', '_past.jpg')
+                        
+                        # 덮어쓰기 방지 (기존 거 있으면 삭제)
+                        if os.path.exists(new_path):
+                            os.remove(new_path)
+                            
                         try:
-                            if os.path.exists(real_src):
-                                shutil.copy2(real_src, real_dst)
-                                past_images_list.append(dst_path)
-                            else:
-                                print(f"  [Skip] 원본 파일 없음: {real_src}")
+                            os.rename(old_path, new_path) # Move
+                            archived_files.append(f"./{new_path}")
                         except Exception as e:
-                            print(f"  [Error] 아카이빙 실패 ({real_src} -> {real_dst}): {e}")
+                            print(f"  [Error] 아카이빙 실패 ({old_path}): {e}")
+
+                    # JSON 업데이트 (Past)
+                    if archived_files:
+                         data[mart_index]['flyers']['past']['images'] = archived_files
+                         print(f"[{mart_name}] 지난 전단지 아카이빙 완료 ({len(archived_files)}장).")
+
+                # 2. 최신 반영 (Temp -> Current)
+                # temp_emart_01.jpg -> emart_new_01.jpg
+                final_current_files = []
+                for idx, temp_path in enumerate(temp_files):
+                    if not os.path.exists(temp_path): continue
                     
-                    # 복사에 성공한 파일들로 Past 목록 업데이트
-                    if past_images_list:
-                        data[mart_index]['flyers']['past']['images'] = past_images_list
-                        print(f"[{mart_name}] 지난 전단지 아카이빙 완료 ({len(past_images_list)}장).")
-                else:
-                    print(f"[{mart_name}] 경고: 현재 파일 누락으로 아카이빙 건너뜀.")
+                    # 최종 파일명 결정
+                    # temp_emart_01.jpg -> emart_new_01.jpg
+                    # temp_emart_10.jpg -> emart_new_10.jpg
+                    # 순서(idx) 기반으로 이름을 새로 지어주는 게 안전함
+                    final_name = f"{IMAGES_DIR}/{prefix}_new_{idx+1:02d}.jpg"
+                    
+                    if os.path.exists(final_name):
+                        os.remove(final_name)
+                    
+                    try:
+                        os.rename(temp_path, final_name)
+                        final_current_files.append(f"./{final_name}")
+                    except Exception as e:
+                        print(f"  [Error] 최신 반영 실패 ({temp_path}): {e}")
                 
-                # 최신 데이터 덮어쓰기
-                data[mart_index]['flyers']['current']['images'] = new_images
+                # JSON 업데이트 (Current)
+                data[mart_index]['flyers']['current']['images'] = final_current_files
+                print(f"[{mart_name}] 최신 전단지 업데이트 완료 ({len(final_current_files)}장).")
 
             # 순차적으로 데이터 갱신
             update_mart_data(0, new_emart_images)
