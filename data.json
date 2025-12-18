@@ -18,8 +18,7 @@
                     "./images/emart_new_08.jpg",
                     "./images/emart_new_09.jpg",
                     "./images/emart_new_10.jpg",
-                    "./images/emart_new_11.jpg",
-                    "./images/emart_new_12.jpg"
+                    "./images/emart_new_11.jpg"
                 ],
                 "type": "image"
             },
@@ -33,7 +32,11 @@
                     "./images/emart_new_05.jpg",
                     "./images/emart_new_06.jpg",
                     "./images/emart_new_07.jpg",
-                    "./images/emart_new_08.jpg"
+                    "./images/emart_new_08.jpg",
+                    "./images/emart_new_09.jpg",
+                    "./images/emart_new_10.jpg",
+                    "./images/emart_new_11.jpg",
+                    "./images/emart_new_12.jpg"
                 ],
                 "type": "image"
             }
