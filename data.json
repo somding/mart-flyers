@@ -86,7 +86,15 @@
         "flyers": {
             "current": {
                 "title": "최신 전단지 보기",
-                "images": [],
+                "images": [
+                    "./images/lotte_new_01.jpg",
+                    "./images/lotte_new_02.jpg",
+                    "./images/lotte_new_03.jpg",
+                    "./images/lotte_new_04.jpg",
+                    "./images/lotte_new_05.jpg",
+                    "./images/lotte_new_06.jpg",
+                    "./images/lotte_new_07.jpg"
+                ],
                 "type": "image"
             },
             "past": {
