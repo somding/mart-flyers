@@ -31,11 +31,41 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             marts = data;
             renderMarts();
+            // [UX 성능 최적화] 사용자가 클릭하기 전에 최신 전단지 1면을 미리 받아둡니다. (Preloading)
+            preloadCovers(marts);
         })
         .catch(error => {
             console.error('데이터 로드 실패:', error);
             martList.innerHTML = '<p style="text-align:center; padding:50px;">데이터를 불러오는 데 실패했습니다.<br>잠시 후 다시 시도해주세요.</p>';
         });
+
+    // ==========================================
+    // 🚀 성능 최적화 (Preloading)
+    // ==========================================
+    function preloadCovers(marts) {
+        // 브라우저가 쉬고 있을 때(Idle) 실행하여 메인 로딩을 방해하지 않음
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => {
+                marts.forEach(mart => {
+                    const images = mart.flyers?.current?.images;
+                    if (images && images.length > 0) {
+                        const img = new Image();
+                        img.src = images[0]; // 1면 이미지 미리 로드 (브라우저 캐시에 저장)
+                    }
+                });
+            });
+        } else {
+            // 구형 브라우저 폴백
+            setTimeout(() => {
+                marts.forEach(mart => {
+                    const images = mart.flyers?.current?.images;
+                    if (images && images.length > 0) {
+                        new Image().src = images[0];
+                    }
+                });
+            }, 1000);
+        }
+    }
 
     // ==========================================
     // 🎨 UI 렌더링 (Rendering)
