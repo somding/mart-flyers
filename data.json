@@ -15,7 +15,11 @@
                     "./images/emart_new_05.jpg",
                     "./images/emart_new_06.jpg",
                     "./images/emart_new_07.jpg",
-                    "./images/emart_new_08.jpg"
+                    "./images/emart_new_08.jpg",
+                    "./images/emart_new_09.jpg",
+                    "./images/emart_new_10.jpg",
+                    "./images/emart_new_11.jpg",
+                    "./images/emart_new_12.jpg"
                 ],
                 "type": "image"
             },
@@ -28,7 +32,8 @@
                     "./images/emart_new_04.jpg",
                     "./images/emart_new_05.jpg",
                     "./images/emart_new_06.jpg",
-                    "./images/emart_new_07.jpg"
+                    "./images/emart_new_07.jpg",
+                    "./images/emart_new_08.jpg"
                 ],
                 "type": "image"
             }
@@ -48,19 +53,23 @@
                     "./images/homeplus_new_03.jpg",
                     "./images/homeplus_new_04.jpg",
                     "./images/homeplus_new_05.jpg",
-                    "./images/homeplus_new_06.jpg"
+                    "./images/homeplus_new_06.jpg",
+                    "./images/homeplus_new_07.jpg",
+                    "./images/homeplus_new_08.jpg",
+                    "./images/homeplus_new_09.jpg",
+                    "./images/homeplus_new_10.jpg"
                 ],
                 "type": "image"
             },
             "past": {
                 "title": "지난 전단지",
                 "images": [
-                    "./images/homeplus_01.jpg",
-                    "./images/homeplus_02.jpg",
-                    "./images/homeplus_03.jpg",
-                    "./images/homeplus_04.jpg",
-                    "./images/homeplus_05.jpg",
-                    "./images/homeplus_06.jpg"
+                    "./images/homeplus_new_01.jpg",
+                    "./images/homeplus_new_02.jpg",
+                    "./images/homeplus_new_03.jpg",
+                    "./images/homeplus_new_04.jpg",
+                    "./images/homeplus_new_05.jpg",
+                    "./images/homeplus_new_06.jpg"
                 ],
                 "type": "image"
             }
