@@ -290,109 +290,65 @@ async def scrape_homeplus(context, session):
 
 async def scrape_lotte(context, session):
     """
-    롯데마트 크롤링 (좌표 기반 정렬 + Lazy Loading 강력 대응)
+    롯데마트 크롤링 (단순 DOM 파싱 - 원복)
+    복잡한 JS 로직 제거하고 가장 기초적인 방식으로 복귀.
     """
     print(f"[롯데마트] 크롤링 시작...")
     page = await context.new_page()
-    final_images = []
+    images = []
     
     try:
         await page.goto(LOTTE_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
         await page.wait_for_timeout(3000)
         
-        # 스크롤 최하단으로 이동 (Lazy Loading 유도)
+        # 스크롤 최하단으로 이동
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         await page.wait_for_timeout(2000)
         
-        # 이미지 데이터 추출 (좌표 포함)
-        img_data = await page.evaluate('''() => {
-            const imgs = Array.from(document.querySelectorAll('img'));
-            return imgs.map(img => {
-                const rect = img.getBoundingClientRect();
-                return {
-                    src: img.src,
-                    dataSrc: img.getAttribute('data-src'),
-                    top: rect.top + window.scrollY,
-                    width: rect.width,
-                    height: rect.height
-                };
-            }).filter(item => {
-                // 필터링: 크기가 충분히 커야 함 (아이콘 제외)
-                return item.width > 200 && item.height > 200;
-            });
-        }''')
+        img_elements = await page.query_selector_all('img')
         
-        # 정렬 및 중복 제거
-        sorted_img_data = sorted(img_data, key=lambda x: x['top'])
-        unique_images = []
-        seen_urls = set()
-        
-        for item in sorted_img_data:
-            real_src = item['dataSrc'] if item['dataSrc'] else item['src']
-            
-            if not real_src: continue
-            
-            # URL 보정
-            if not real_src.startswith('http'):
-                if real_src.startswith('//'):
-                    real_src = 'https:' + real_src
-                elif real_src.startswith('/'):
-                    real_src = 'https://www.mlotte.net' + real_src
-            
-            # 로고/아이콘 추가 필터링 (URL 스트링)
-            if 'logo' in real_src or 'icon' in real_src:
-                continue
-                
-            if real_src in seen_urls:
-                continue
-            
-            seen_urls.add(real_src)
-            unique_images.append(real_src)
-            
-            if len(unique_images) >= 20: break
-            
-        if not unique_images:
-            print("[롯데마트] JS 추출 실패 또는 이미지 없음. 2차 시도 (기본 선택자)...")
-            img_elements = await page.query_selector_all('img')
-            for img in img_elements:
-                src = await img.get_attribute('src')
-                data_src = await img.get_attribute('data-src')
-                real_src = data_src or src
-                
-                if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src and 'icon' not in real_src:
-                     if not real_src.startswith('http'):
-                        if real_src.startswith('//'):
-                            real_src = 'https:' + real_src
-                        elif real_src.startswith('/'):
-                            real_src = 'https://www.mlotte.net' + real_src
-                     
-                     if real_src not in seen_urls:
-                         seen_urls.add(real_src)
-                         unique_images.append(real_src)
-                         if len(unique_images) >= 20: break
-        
-        print(f"[롯데마트] 발견된 유효 이미지: {len(unique_images)}장")
-        
-        # 다운로드 실행
         tasks = []
+        seen_urls = set()
         count = 1
-        for src in unique_images:
-            filename = f"lotte_new_{count:02d}.jpg"
-            tasks.append(download_image(session, src, filename))
-            count += 1
+        
+        for img in img_elements:
+            src = await img.get_attribute('src')
+            data_src = await img.get_attribute('data-src')
+            real_src = data_src or src # data-src 우선
             
+            if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src and 'icon' not in real_src:
+                 # 상대 경로 처리
+                 if not real_src.startswith('http'):
+                    if real_src.startswith('//'):
+                        real_src = 'https:' + real_src
+                    elif real_src.startswith('/'):
+                        real_src = 'https://www.mlotte.net' + real_src
+                 
+                 # 중복 제거
+                 if real_src in seen_urls:
+                     continue
+                 seen_urls.add(real_src)
+                 
+                 filename = f"lotte_new_{count:02d}.jpg"
+                 tasks.append(download_image(session, real_src, filename))
+                 count += 1
+                 if count > 20: break
+        
         if tasks:
+            print(f"[롯데마트] {len(tasks)}개 이미지 발견. 다운로드 시작.")
             results = await asyncio.gather(*tasks)
-            valid_results = [r for r in results if r is not None]
-            final_images = sorted(valid_results) # lotte_new_01.jpg 순 정렬
+            images = [r for r in results if r is not None]
+            # 단순 방식은 파일명 순서 정렬을 따로 안 해도 gathered result가 task 순서를 따름
+            # 하지만 안전하게 정렬은 한 번 해줌
+            images = sorted(images)
 
     except Exception as e:
         print(f"[롯데마트] 오류 발생: {e}")
     finally:
         await page.close()
     
-    return final_images
+    return images
 
 
 # ==========================================
