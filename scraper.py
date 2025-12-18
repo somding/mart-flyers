@@ -17,7 +17,7 @@ IMAGES_DIR = 'images'
 # 각 마트별 모바일 전단지 URL
 EMART_URL = 'https://eapp.emart.com/leaflet/leafletView_EL.do'
 HOMEPLUS_URL = 'https://my.homeplus.co.kr/leaflet'
-LOTTE_URL = 'https://www.mlotte.net/leaflet?leaflet_id=2000139'
+LOTTE_URL = 'https://www.mlotte.net/leaflet'
 
 # ==========================================
 # 유틸리티 함수 (Utility Functions)
