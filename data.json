@@ -18,9 +18,11 @@
                     "./images/emart_new_08.jpg",
                     "./images/emart_new_09.jpg",
                     "./images/emart_new_10.jpg",
-                    "./images/emart_new_11.jpg"
+                    "./images/emart_new_11.jpg",
+                    "./images/emart_new_12.jpg"
                 ],
-                "type": "image"
+                "type": "image",
+                "date": "2025-12-18"
             },
             "past": {
                 "title": "지난 전단지",
