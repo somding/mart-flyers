@@ -87,23 +87,26 @@ async def download_image(session, url, filename):
                 try:
                     with Image.open(filepath) as img:
                         w, h = img.size
-                        # 가로/세로 500px 미만이면 삭제 (아이콘, 버튼 등)
-                        if w < 500 or h < 500:
+                        # 가로/세로 300px 미만이면 삭제 (타일 이미지 고려하여 완화)
+                        if w < 300 or h < 300:
                             # print(f"[-] 너무 작은 이미지 제거 ({w}x{h}): {filename}")
                             os.remove(filepath)
                             return None
                         
                         # [추가 필터] 스프라이트 이미지(아이콘 모음) 제거
-                        # 보통 전단지는 세로로 길거나 정사각형에 가깝습니다.
-                        # 가로가 세로보다 2배 이상 길면(W > H * 2) 아이콘 띠일 확률이 높음.
-                        if w > h * 2:
-                            print(f"[-] 스프라이트/배너로 의심되어 제거 ({w}x{h}): {filename}")
+                        if w > h * 2.5: # 비율 필터 약간 완화
+                            # print(f"[-] 스프라이트/배너로 의심되어 제거 ({w}x{h}): {filename}")
                             os.remove(filepath)
                             return None
 
                 except Exception:
                     os.remove(filepath)
                     return None
+                    
+                # 성공 시 경로 반환
+                return f"./{IMAGES_DIR}/{filename}"
+            else:
+                 return None
                     
                 # 성공 시 경로 반환
                 return f"./{IMAGES_DIR}/{filename}"
@@ -300,11 +303,14 @@ async def scrape_lotte(context, session):
     try:
         await page.goto(LOTTE_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
-        await page.wait_for_timeout(3000)
+    try:
+        await page.goto(LOTTE_URL, timeout=60000)
+        await page.wait_for_load_state('networkidle')
+        await page.wait_for_timeout(6000) # 로딩 대기 시간 증가
         
         # 스크롤 최하단으로 이동
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        await page.wait_for_timeout(2000)
+        await page.wait_for_timeout(3000)
         
         img_elements = await page.query_selector_all('img')
         
@@ -317,7 +323,8 @@ async def scrape_lotte(context, session):
             data_src = await img.get_attribute('data-src')
             real_src = data_src or src # data-src 우선
             
-            if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src and 'icon' not in real_src:
+            # URL 문자열 필터 대폭 완화 (확장자 검사 제거)
+            if real_src and 'logo' not in real_src and 'icon' not in real_src:
                  # 상대 경로 처리
                  if not real_src.startswith('http'):
                     if real_src.startswith('//'):
