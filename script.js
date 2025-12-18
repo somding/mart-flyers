@@ -144,17 +144,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 이미지 렌더링
         if (flyerData.images && flyerData.images.length > 0) {
-            flyerData.images.forEach(imgSrc => {
+            flyerData.images.forEach((imgSrc, index) => {
                 const img = document.createElement('img');
 
-                // 캐시 문제 방지를 위해 타임라이트 versioning (선택 사항)
-                // img.src = imgSrc + '?v=' + new Date().getTime(); 
-                // -> 전단지는 정적 파일이므로 버전 관리는 scraper에서 파일명으로 처리됨. 그냥 씀.
+                // 전단지는 정적 파일이므로 버전 관리는 scraper에서 파일명으로 처리됨.
                 img.src = imgSrc;
-
-                img.alt = `${currentMart.name} 전단지`;
+                img.alt = `${currentMart.name} 전단지 Page ${index + 1}`;
                 img.className = 'flyer-img';
-                img.loading = 'lazy'; // 성능 최적화
+
+                // [UX 최적화] 첫 장은 바로 로딩(Eager), 나머지는 지연 로딩(Lazy)
+                if (index === 0) {
+                    img.loading = 'eager';
+                    img.setAttribute('fetchpriority', 'high');
+                } else {
+                    img.loading = 'lazy';
+                }
 
                 // 이미지 로딩 에러 핸들링
                 img.onerror = function () {
