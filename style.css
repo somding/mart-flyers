@@ -1,17 +1,19 @@
 :root {
-    --primary-color: #FF0055;
-    /* Hot Pink */
-    --secondary-color: #0099FF;
-    /* Electric Blue */
-    --accent-color: #FFDD00;
-    /* Bright Yellow */
-    --bg-color: #FFFFFF;
-    --text-color: #111111;
-    --card-bg: #F8F9FA;
-    --border-color: #000000;
-    --shadow-hard: 4px 4px 0px #000000;
-    --shadow-hover: 8px 8px 0px #000000;
-    --transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Brand Colors (Modern Palette) */
+    --primary-color: #2D3436;
+    /* Dark Charcoal */
+    --accent-color: #FF5E57;
+    /* Soft Red */
+    --bg-color: #F8F9FA;
+    /* Light Gray Background */
+    --text-color: #2D3436;
+    --card-bg: #FFFFFF;
+
+    /* Shadows & Radius */
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    --card-hover-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 * {
@@ -21,12 +23,11 @@
 }
 
 body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: var(--accent-color);
-    background-image: radial-gradient(#000 1px, transparent 1px);
-    background-size: 20px 20px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
 .container {
@@ -37,195 +38,136 @@ body {
 
 /* Header */
 .header {
-    background: var(--primary-color);
-    color: white;
-    padding: 60px 0;
+    background: white;
+    padding: 80px 0 60px;
     text-align: center;
-    margin-bottom: 50px;
-    border-bottom: 4px solid black;
-    position: relative;
-    overflow: hidden;
-}
-
-.header::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: repeating-linear-gradient(45deg,
-            transparent,
-            transparent 10px,
-            rgba(255, 255, 255, 0.1) 10px,
-            rgba(255, 255, 255, 0.1) 20px);
-    pointer-events: none;
+    margin-bottom: 40px;
+    /* border-bottom: 1px solid rgba(0,0,0,0.05); */
 }
 
 .header h1 {
-    font-size: 3.5rem;
-    margin-bottom: 10px;
-    font-weight: 900;
-    text-transform: uppercase;
-    text-shadow: 4px 4px 0px #000000;
+    font-family: 'GmarketSans', sans-serif;
+    font-weight: 700;
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: var(--text-color);
     letter-spacing: -1px;
-    position: relative;
-    z-index: 1;
 }
 
 .header p {
-    font-size: 1.3rem;
-    font-weight: 700;
-    background: black;
-    color: white;
-    display: inline-block;
-    padding: 5px 15px;
-    transform: rotate(-2deg);
-    box-shadow: 4px 4px 0px white;
-    position: relative;
-    z-index: 1;
+    font-size: 1.1rem;
+    color: #636e72;
+    font-weight: 400;
 }
 
 /* Mart Grid */
 .mart-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 40px;
+    gap: 30px;
     padding-bottom: 80px;
 }
 
 .mart-card {
-    background: white;
-    border: 4px solid black;
-    border-radius: 0;
+    background: var(--card-bg);
+    border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: var(--shadow-hard);
+    box-shadow: var(--card-shadow);
     transition: var(--transition);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    /* 아주 미세한 테두리 */
 }
 
 .mart-card:hover {
-    transform: translate(-4px, -4px);
-    box-shadow: var(--shadow-hover);
+    transform: translateY(-8px);
+    box-shadow: var(--card-hover-shadow);
 }
 
-.mart-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 6px;
-    background: var(--secondary-color);
-    z-index: 10;
-}
-
-.mart-card:nth-child(2)::before {
-    background: var(--primary-color);
-}
-
-.mart-card:nth-child(3)::before {
-    background: var(--accent-color);
-}
-
+/* Logo Area */
 .mart-logo-area {
-    height: 200px;
+    height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #fff;
-    border-bottom: 4px solid black;
-    padding: 20px;
+    padding: 30px;
     position: relative;
-    overflow: hidden;
-}
-
-.mart-logo-area::after {
-    content: '';
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(0, 0, 0, 0.05) 10%, transparent 10.5%);
-    background-size: 20px 20px;
-    opacity: 0.5;
-    z-index: 0;
+    border-bottom: 1px solid #f1f2f6;
 }
 
 .mart-logo {
     max-width: 80%;
     max-height: 80%;
     object-fit: contain;
-    z-index: 1;
-    filter: drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s ease;
 }
 
+.mart-card:hover .mart-logo {
+    transform: scale(1.05);
+}
+
+/* Info Area */
 .mart-info {
-    padding: 25px;
+    padding: 30px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    background: white;
 }
 
 .mart-name {
-    font-size: 1.8rem;
-    font-weight: 900;
-    margin-bottom: 15px;
-    color: black;
-    text-transform: uppercase;
+    font-family: 'GmarketSans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-color);
     line-height: 1.2;
 }
 
 .name-ko {
     display: block;
-    font-size: 1.1em;
-    /* 부모 대비 약간 큼 */
-    letter-spacing: -1px;
+    margin-bottom: 4px;
 }
 
 .name-en {
     display: block;
-    font-size: 0.6em;
-    /* 작게 */
-    color: #555;
-    font-weight: 700;
-    margin-top: 4px;
-    letter-spacing: 0;
+    font-size: 0.85rem;
+    color: #b2bec3;
+    font-weight: 500;
+    font-family: 'Pretendard', sans-serif;
+    /* 영문은 깔끔하게 */
 }
 
 .mart-desc {
-    font-size: 0.95rem;
-    color: #444;
-    margin-bottom: 25px;
-    font-weight: 500;
+    font-size: 1rem;
+    color: #636e72;
+    margin-bottom: 30px;
     line-height: 1.5;
     flex-grow: 1;
     word-break: keep-all;
-    /* 한글 줄바꿈 개선 */
 }
 
 .view-btn {
     display: block;
-    padding: 15px 0;
-    background: var(--secondary-color);
-    color: white;
-    border: 3px solid black;
+    padding: 16px 0;
+    background: white;
+    color: var(--text-color);
+    border: 1px solid #dfe6e9;
+    border-radius: 12px;
     text-decoration: none;
-    font-weight: 900;
+    font-weight: 600;
     text-align: center;
     transition: var(--transition);
-    box-shadow: 4px 4px 0px black;
-    text-transform: uppercase;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .view-btn:hover {
-    background: var(--primary-color);
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px black;
+    background: var(--text-color);
+    color: white;
+    border-color: var(--text-color);
 }
 
 /* Modal */
@@ -235,15 +177,16 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.6);
+    /* 더 투명하게 */
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s;
-    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
 }
 
 .modal.show {
@@ -252,152 +195,166 @@ body {
 }
 
 .modal-content {
-    background-color: var(--accent-color);
-    padding: 0;
-    border: 4px solid black;
-    border-radius: 0;
-    max-width: 95%;
-    max-height: 95%;
-    width: 900px;
+    background-color: white;
+    border-radius: var(--radius);
+    max-width: 1000px;
+    /* 좀 더 넓게 */
+    width: 95%;
+    height: 90vh;
+    /* 화면의 90% 높이 */
     position: relative;
     display: flex;
     flex-direction: column;
-    box-shadow: 10px 10px 0px black;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
 }
 
 .close-button {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 2.5rem;
+    top: 20px;
+    right: 25px;
+    font-size: 2rem;
     cursor: pointer;
-    color: black;
+    color: #b2bec3;
     transition: var(--transition);
     z-index: 20;
     line-height: 1;
-    font-weight: 900;
 }
 
 .close-button:hover {
-    color: var(--primary-color);
-    transform: scale(1.2) rotate(90deg);
+    color: var(--text-color);
+    transform: rotate(90deg);
 }
 
 #modal-title {
     background: white;
-    color: black;
+    color: var(--text-color);
     text-align: center;
-    padding: 20px;
-    font-size: 2rem;
-    font-weight: 900;
-    border-bottom: 4px solid black;
+    padding: 30px 20px 20px;
+    font-family: 'GmarketSans', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
     margin: 0;
+}
+
+.name-en-modal {
+    display: block;
+    font-size: 0.9rem;
+    color: #b2bec3;
+    margin-top: 5px;
+    font-family: 'Pretendard', sans-serif;
 }
 
 /* Tabs */
 .modal-tabs {
     display: flex;
-    border-bottom: 4px solid black;
+    justify-content: center;
+    /* 중앙 정렬 */
+    border-bottom: 1px solid #f1f2f6;
     background: white;
+    padding: 0 20px;
 }
 
 .tab-btn {
-    flex: 1;
-    padding: 15px;
-    background: white;
+    padding: 15px 30px;
+    background: transparent;
     border: none;
-    border-right: 4px solid black;
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #888;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #b2bec3;
     cursor: pointer;
     transition: var(--transition);
-}
-
-.tab-btn:last-child {
-    border-right: none;
+    position: relative;
+    font-family: 'Pretendard', sans-serif;
 }
 
 .tab-btn.active {
-    background: var(--secondary-color);
-    color: white;
+    color: var(--text-color);
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    /* border-bottom 위에 겹치게 */
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--text-color);
+    border-radius: 3px 3px 0 0;
 }
 
 .tab-btn:hover:not(.active) {
-    background: #f0f0f0;
-    color: black;
+    color: #636e72;
 }
 
+/* Flyer Container */
 .flyer-container {
     flex-grow: 1;
     overflow-y: auto;
     text-align: center;
-    background: white;
-    padding: 20px;
+    background: #f8f9fa;
+    /* 전단지 배경은 약간 어둡게 해서 전단지 집중 */
+    padding: 40px;
     position: relative;
 }
 
 .flyer-img {
     width: 100%;
-    /* 부모 너비에 꽉 차게 */
-    max-width: 100%;
-    /* 화면 밖으로 나가지 않게 */
+    max-width: 800px;
+    /* PC 최적 너비 */
     height: auto;
     display: block;
-    margin: 0 auto 10px;
-    /* 간격 축소 */
-    border: none;
-    /* 테두리 제거 (이미지 자체로 꽉 차게) -> 사용자 요청 반영 */
-    /* border: 3px solid black; */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* 모바일 등 작은 화면에서 마진 제거하여 더 넓게 보여줌 */
-@media (max-width: 600px) {
-    .flyer-container {
-        padding: 0;
-        /* 패딩 제거 */
-    }
-
-    .flyer-img {
-        margin-bottom: 5px;
-        box-shadow: none;
-        /* 모바일 성능 최적화 */
-    }
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    /* 은은한 그림자 */
+    border-radius: 8px;
+    /* 살짝 라운드 */
 }
 
 /* Responsive */
 @media (max-width: 768px) {
     .header {
-        padding: 40px 0;
+        padding: 50px 0 30px;
     }
 
     .header h1 {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
 
     .mart-grid {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
-
-    .mart-card {
-        margin: 0 10px;
+        gap: 20px;
     }
 
     .modal-content {
         width: 100%;
         height: 100%;
         max-height: 100%;
-        border: none;
+        /* 모바일 꽉 채우기 */
         border-radius: 0;
     }
 
-    .view-btn {
-        padding: 12px 0;
+    .flyer-container {
+        padding: 0;
+        /* 모바일은 꽉 차게 */
+        background: black;
+        /* 모바일 집중도 향상 */
+    }
 
-        .view-btn {
-            padding: 12px 0;
-        }
+    .flyer-img {
+        max-width: none;
+        border-radius: 0;
+        margin-bottom: 0;
+        box-shadow: none;
+    }
+
+    .close-button {
+        top: 15px;
+        right: 15px;
+    }
+
+    #modal-title {
+        padding-top: 50px;
+        /* X버튼 공간 확보 */
     }
 }
