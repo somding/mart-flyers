@@ -1,37 +1,34 @@
 /* =========================================
-   STYLE.CSS (Premium Dark Mode)
+   STYLE.CSS (Modern Light - Fresh & Fluid)
    ========================================= */
 
-
-
-/* 2. Variables (Dark Theme) */
+/* 1. Variables (Light Theme - Fresh) */
 :root {
-    /* Font Stack Update: Gmarket Sans (Distinctive & Hip) */
-    --font-heading: 'GmarketSansBold', 'Pretendard', -apple-system, sans-serif;
-    --font-body: 'GmarketSansMedium', 'GmarketSansLight', 'Pretendard', -apple-system, sans-serif;
+    /* Fonts: Title(Gmarket) + Body(Pretendard) Mix */
+    --font-heading: 'GmarketSansBold', 'GmarketSansMedium', -apple-system, sans-serif;
+    --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
-    --text-main: #ffffff;
-    --text-sub: #a1a1a6;
-    /* iOS Gray */
-    --bg-color: #000000;
+    /* Colors */
+    --text-main: #191919;
+    --text-sub: #666666;
+    --bg-color: #f8f9fa;
+    /* Soft White */
 
-    /* 카드 색상: 다크 글래스 */
-    --card-bg: rgba(28, 28, 30, 0.65);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.12);
+    /* 카드: 깨끗한 화이트 + 투명도 */
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.8);
 
-    /* 그림자: 어둡게 */
-    --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
-    --shadow-hover: 0 20px 50px -10px rgba(0, 0, 0, 0.9);
+    /* 그림자: 부드럽고 넓게 퍼짐 */
+    --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 20px 50px -10px rgba(0, 0, 0, 0.12);
 
-    --accent: #0a84ff;
-    /* iOS Dark Blue */
-    --radius: 28px;
-
-    /* 폰트 스택 */
-
+    --accent: #2c3e50;
+    /* Deep Blue Grey for calm accent */
+    --radius: 24px;
+    /* 적당한 둥글기 */
 }
 
-/* 3. Global Reset */
+/* 2. Global Reset */
 * {
     margin: 0;
     padding: 0;
@@ -42,14 +39,16 @@ body {
     font-family: var(--font-body);
     background-color: var(--bg-color);
     color: var(--text-main);
-    line-height: 1.5;
+    line-height: 1.6;
     overflow-x: hidden;
     min-height: 100vh;
     position: relative;
-    z-index: 1;
+    /* 스무스 스크롤 */
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* 4. Background (Midnight Aurora) */
+/* 3. Background (Soft Fluid Pastel) */
 .bg-aurora {
     position: fixed;
     top: 0;
@@ -57,105 +56,91 @@ body {
     width: 100%;
     height: 100vh;
     z-index: -1;
-    background-color: #050505;
-    background-image:
-        radial-gradient(at 10% 10%, rgba(20, 20, 25, 1) 0px, transparent 50%),
-        radial-gradient(at 90% 0%, rgba(25, 25, 35, 1) 0px, transparent 50%);
+    background-color: #fcfcfc;
     overflow: hidden;
 }
 
+/* 아주 은은하게 움직이는 파스텔 원형들 */
 .bg-aurora::before {
     content: '';
     position: absolute;
-    top: -20%;
-    right: -20%;
-    width: 70vw;
-    height: 70vw;
-    background: radial-gradient(circle, rgba(58, 123, 213, 0.15), transparent 70%);
-    /* Blue Glow */
+    top: -10%;
+    right: -10%;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, rgba(200, 230, 255, 0.4), transparent 70%);
+    /* Soft Blue */
     filter: blur(80px);
-    animation: spotlight 12s infinite alternate ease-in-out;
+    animation: floatBlob 20s infinite alternate ease-in-out;
+    opacity: 0.6;
 }
 
 .bg-aurora::after {
     content: '';
     position: absolute;
-    bottom: -20%;
-    left: -20%;
-    width: 60vw;
-    height: 60vw;
-    background: radial-gradient(circle, rgba(147, 51, 234, 0.12), transparent 70%);
-    /* Purple Glow */
+    bottom: -10%;
+    left: -10%;
+    width: 70vw;
+    height: 70vw;
+    background: radial-gradient(circle, rgba(255, 220, 230, 0.4), transparent 70%);
+    /* Soft Pink */
     filter: blur(80px);
-    animation: spotlight 15s infinite alternate-reverse ease-in-out;
+    animation: floatBlob 25s infinite alternate-reverse ease-in-out;
+    opacity: 0.6;
 }
 
-@keyframes spotlight {
+@keyframes floatBlob {
     0% {
-        transform: scale(1);
-        opacity: 0.6;
+        transform: translate(0, 0) scale(1);
     }
 
     100% {
-        transform: scale(1.1);
-        opacity: 0.9;
+        transform: translate(30px, 20px) scale(1.05);
     }
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 1200px;
+    /* 조금 더 넓게 */
     margin: 0 auto;
     padding: 0 24px;
 }
 
-/* 5. Header */
+/* 4. Header (Clean Glass) */
 .header {
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: 24px 0;
-    background: rgba(28, 28, 30, 0.75);
-    /* Dark Glass */
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    text-align: center;
+    padding: 20px 0;
+    background: rgba(255, 255, 255, 0.8);
+    /* Clean Glass */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
     transition: all 0.3s ease;
 }
 
-/* User Request: Font Fix & Styling */
 .header h1 {
     font-family: var(--font-heading);
-    font-weight: 800;
-    /* Extra Bold for Impact */
-    font-size: 2.8rem;
-    letter-spacing: -0.04em;
-    /* Tight tracking */
-    margin-bottom: 8px;
-
-    /* Silver Gradient Text */
-    background: linear-gradient(135deg, #ffffff 0%, #a1a1a6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: #fff;
-    /* Fallback */
-
-    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
+    font-weight: 700;
+    font-size: 2.2rem;
+    color: #333;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
 }
 
 .header p {
-    font-size: 1.1rem;
-    color: var(--text-sub);
-    font-weight: 500;
+    font-size: 1rem;
+    color: #777;
+    font-weight: 400;
 }
 
-/* 6. Mart Grid */
+/* 5. Mart Grid */
 .mart-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 32px;
-    padding: 40px 0 100px;
+    padding: 50px 0 100px;
 }
 
 .mart-card {
@@ -163,58 +148,50 @@ body {
     border-radius: var(--radius);
     box-shadow: var(--shadow-soft);
     border: var(--glass-border);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    /* Smooth Transition */
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
 }
 
 .mart-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-8px);
+    /* 과하지 않게 살짝 뜸 */
     box-shadow: var(--shadow-hover);
-    background: rgba(44, 44, 46, 0.8);
-    border-color: rgba(255, 255, 255, 0.3);
-    /* Hover시 테두리 밝게 */
+    background: #fff;
+    /* 호버 시 완전 불투명 화이트 */
 }
 
 /* Logo Area */
 .mart-logo-area {
-    padding: 40px;
+    padding: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
-    /* 로고가 잘 보이도록 약간 밝은 배경 or 흰색 그라데이션 */
-    background: linear-gradient(to bottom, #ffffff, #f2f2f7);
+    height: 180px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
     position: relative;
-}
-
-/* 로고와 다크모드 경계 부드럽게 */
-.mart-logo-area::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 40px;
-    background: linear-gradient(to bottom, transparent, rgba(28, 28, 30, 0.3));
+    overflow: hidden;
 }
 
 .mart-logo {
-    max-width: 70%;
-    max-height: 70%;
+    max-width: 65%;
+    max-height: 65%;
     object-fit: contain;
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
+    transition: transform 0.4s ease;
 }
 
 .mart-card:hover .mart-logo {
-    transform: scale(1.1);
+    transform: scale(1.08);
+    /* 부드러운 확대 */
 }
 
+/* Info Area */
 .mart-info {
     padding: 28px;
     flex-grow: 1;
@@ -224,79 +201,70 @@ body {
 
 .mart-name {
     font-family: var(--font-heading);
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     color: var(--text-main);
 }
 
-.name-ko {
-    display: block;
+.name-zh,
+.name-ko,
+.name-en {
+    display: inline-block;
+    margin-right: 6px;
 }
 
 .name-en {
-    display: block;
-    font-size: 0.9rem;
-    color: var(--text-sub);
+    font-size: 0.9em;
+    color: #999;
     font-weight: 400;
-    font-family: var(--font-body);
-    margin-top: 2px;
 }
 
 .mart-desc {
-    margin-top: 12px;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-sub);
-    line-height: 1.6;
+    line-height: 1.5;
     margin-bottom: 24px;
     flex-grow: 1;
     word-break: keep-all;
 }
 
+/* Button */
 .view-btn {
-    display: inline-block;
-    padding: 12px 24px;
-    background: #fff;
-    /* Black BG -> White Button */
-    color: #000;
-    border-radius: 100px;
+    display: table;
+    /* 내용물 크기만큼 */
+    padding: 10px 20px;
+    background: #f1f3f5;
+    color: #495057;
+    border-radius: 12px;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.9rem;
-    text-align: center;
     transition: all 0.2s ease;
-    align-self: flex-start;
 }
 
-.view-btn:hover {
-    background: #e5e5ea;
-    transform: scale(1.05);
+.mart-card:hover .view-btn {
+    background: #333;
+    color: #fff;
 }
 
-/* 7. Modal */
+/* 6. Modal (Clean & Airy) */
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    /* Darker dim */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.4);
+    /* 연한 딤 처리 */
+    backdrop-filter: blur(5px);
     z-index: 2000;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease;
     display: flex;
     justify-content: center;
-    align-items: flex-end;
-}
-
-@media (min-width: 769px) {
-    .modal {
-        align-items: center;
-    }
+    align-items: center;
 }
 
 .modal.show {
@@ -305,51 +273,43 @@ body {
 }
 
 .modal-content {
-    background: #1c1c1e;
-    /* Dark Surface */
-    width: 100%;
-    height: 95%;
+    background: #fff;
+    width: 95%;
+    /* 모바일 꽉 차게 */
+    height: 90%;
     max-width: 1000px;
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    position: relative;
-    transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-@media (min-width: 769px) {
-    .modal-content {
-        height: 90%;
-        border-radius: 24px;
-        transform: translateY(20px);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-    }
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modal.show .modal-content {
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 .close-button {
     position: absolute;
     top: 20px;
     right: 20px;
-    font-size: 1.5rem;
-    background: #2c2c2e;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    font-size: 1.8rem;
+    background: transparent;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #fff;
+    color: #333;
     z-index: 10;
-    border: 1px solid #3a3a3c;
+    transition: transform 0.2s;
+}
+
+.close-button:hover {
+    transform: rotate(90deg);
 }
 
 #modal-title {
@@ -357,69 +317,69 @@ body {
     text-align: center;
     font-family: var(--font-heading);
     font-size: 1.4rem;
-    border-bottom: 1px solid #2c2c2e;
+    border-bottom: 1px solid #f1f3f5;
     margin: 0;
-    color: #fff;
+    color: #333;
 }
 
+/* Tabs */
 .modal-tabs {
     display: flex;
     justify-content: center;
-    padding: 10px;
-    background: #1c1c1e;
-    border-bottom: 1px solid #2c2c2e;
+    gap: 10px;
+    padding: 12px;
+    background: #fff;
+    border-bottom: 1px solid #f1f3f5;
 }
 
 .tab-btn {
-    padding: 8px 16px;
-    margin: 0 4px;
-    border-radius: 8px;
-    border: none;
-    background: transparent;
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #8e8e93;
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background: #f8f9fa;
+    font-size: 0.9rem;
+    color: #868e96;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .tab-btn.active {
-    background: #2c2c2e;
+    background: #333;
     color: #fff;
-    border: 1px solid #3a3a3c;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .flyer-container {
     flex: 1;
     overflow-y: auto;
     padding: 0;
-    background: #121212;
-    /* Very dark gray for image bg */
+    background: #f8f9fa;
+    /* 밝은 회색 배경 */
 }
 
 .flyer-img {
     width: 100%;
-    max-width: 700px;
+    max-width: 650px;
     display: block;
-    margin: 0 auto;
+    margin: 20px auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    /* 이미지에도 살짝 그림자 */
+    border-radius: 8px;
 }
 
-/* Mobile Adjustments */
+/* Mobile */
 @media (max-width: 768px) {
     .header h1 {
-        font-size: 2.0rem;
+        font-size: 1.8rem;
     }
 
     .mart-grid {
-        padding: 30px 0 60px;
+        padding: 30px 0 80px;
     }
 
-    .mart-info {
-        padding: 20px;
-    }
-
-    .view-btn {
+    .modal-content {
         width: 100%;
+        height: 100%;
+        border-radius: 0;
     }
 }
