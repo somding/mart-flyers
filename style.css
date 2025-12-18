@@ -6,9 +6,9 @@
 
 /* 2. Variables (Dark Theme) */
 :root {
-    /* Font Stack Update: Pretendard (Premium & Clean) */
-    --font-heading: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    --font-body: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    /* Font Stack Update: Gmarket Sans (Distinctive & Hip) */
+    --font-heading: 'GmarketSansBold', 'Pretendard', -apple-system, sans-serif;
+    --font-body: 'GmarketSansMedium', 'GmarketSansLight', 'Pretendard', -apple-system, sans-serif;
 
     --text-main: #ffffff;
     --text-sub: #a1a1a6;
