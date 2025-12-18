@@ -416,12 +416,42 @@ async def main():
 
                 print(f"[{mart_name}] 업데이트 진행!")
                 
-                # [안전장치] 현재 파일이 실제로 존재할 때만 '지난 전단지'로 아카이빙
-                # 파일이 없는데 아카이빙하면 지난 전단지도 엑박이 됨
+                # [핵심 수정] 아카이빙 시 파일 분리 (Current -> Past 파일 복사)
+                # 그냥 리스트만 옮기면, 나중에 _new_ 파일이 덮어씌워질 때 Past 데이터도 변해버림.
+                # 따라서 _new_ 파일을 _(old)_ 파일로 복사해서 보존해야 함.
+                
+                import shutil
+                
                 if not missing_files and current_hashes:
-                    data[mart_index]['flyers']['past']['images'] = current_flyer.get('images', [])
+                    past_images_list = []
+                    for src_path in current_flyer.get('images', []):
+                        # 경로: ./images/emart_new_01.jpg -> ./images/emart_01.jpg
+                        # _new_를 제거하여 과거 파일명 생성
+                        if '_new_' in src_path:
+                            dst_path = src_path.replace('_new_', '_')
+                        else:
+                            # 만약 _new_가 없다면 접미사 추가 등으로 충돌 방지
+                            dst_path = src_path.replace('.jpg', '_past.jpg')
+                            
+                        # 실제 파일 복사 (물리적 백업)
+                        real_src = src_path.replace('./', '')
+                        real_dst = dst_path.replace('./', '')
+                        
+                        try:
+                            if os.path.exists(real_src):
+                                shutil.copy2(real_src, real_dst)
+                                past_images_list.append(dst_path)
+                            else:
+                                print(f"  [Skip] 원본 파일 없음: {real_src}")
+                        except Exception as e:
+                            print(f"  [Error] 아카이빙 실패 ({real_src} -> {real_dst}): {e}")
+                    
+                    # 복사에 성공한 파일들로 Past 목록 업데이트
+                    if past_images_list:
+                        data[mart_index]['flyers']['past']['images'] = past_images_list
+                        print(f"[{mart_name}] 지난 전단지 아카이빙 완료 ({len(past_images_list)}장).")
                 else:
-                    print(f"[{mart_name}] 경고: 현재 로컬 파일이 일부 누락되어 아카이빙을 건너뜁니다.")
+                    print(f"[{mart_name}] 경고: 현재 파일 누락으로 아카이빙 건너뜀.")
                 
                 # 최신 데이터 덮어쓰기
                 data[mart_index]['flyers']['current']['images'] = new_images

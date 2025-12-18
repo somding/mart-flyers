@@ -25,18 +25,20 @@
             "past": {
                 "title": "지난 전단지",
                 "images": [
-                    "./images/emart_new_01.jpg",
-                    "./images/emart_new_02.jpg",
-                    "./images/emart_new_03.jpg",
-                    "./images/emart_new_04.jpg",
-                    "./images/emart_new_05.jpg",
-                    "./images/emart_new_06.jpg",
-                    "./images/emart_new_07.jpg",
-                    "./images/emart_new_08.jpg",
-                    "./images/emart_new_09.jpg",
-                    "./images/emart_new_10.jpg",
-                    "./images/emart_new_11.jpg",
-                    "./images/emart_new_12.jpg"
+                    "./images/emart_01.jpg",
+                    "./images/emart_02.jpg",
+                    "./images/emart_03.jpg",
+                    "./images/emart_04.jpg",
+                    "./images/emart_05.jpg",
+                    "./images/emart_06.jpg",
+                    "./images/emart_07.jpg",
+                    "./images/emart_08.jpg",
+                    "./images/emart_09.jpg",
+                    "./images/emart_10.jpg",
+                    "./images/emart_11.jpg",
+                    "./images/emart_12.jpg",
+                    "./images/emart_13.jpg",
+                    "./images/emart_14.jpg"
                 ],
                 "type": "image"
             }
@@ -45,7 +47,7 @@
     {
         "id": "homeplus",
         "name": "홈플러스 (Homeplus)",
-        "description": "생활에 플러스가 됩니다. 홈플러스의 알뜰 정보를 만나보세요.",
+        "description": "신선함이 가득한 홈플러스의 알뜰 쇼핑 정보를 확인하세요.",
         "logo": "./images/homeplus_logo.png",
         "flyers": {
             "current": {
@@ -67,12 +69,21 @@
             "past": {
                 "title": "지난 전단지",
                 "images": [
-                    "./images/homeplus_new_01.jpg",
-                    "./images/homeplus_new_02.jpg",
-                    "./images/homeplus_new_03.jpg",
-                    "./images/homeplus_new_04.jpg",
-                    "./images/homeplus_new_05.jpg",
-                    "./images/homeplus_new_06.jpg"
+                    "./images/homeplus_01.jpg",
+                    "./images/homeplus_02.jpg",
+                    "./images/homeplus_03.jpg",
+                    "./images/homeplus_04.jpg",
+                    "./images/homeplus_05.jpg",
+                    "./images/homeplus_06.jpg",
+                    "./images/homeplus_07.jpg",
+                    "./images/homeplus_08.jpg",
+                    "./images/homeplus_09.jpg",
+                    "./images/homeplus_10.jpg",
+                    "./images/homeplus_11.jpg",
+                    "./images/homeplus_12.jpg",
+                    "./images/homeplus_13.jpg",
+                    "./images/homeplus_14.jpg",
+                    "./images/homeplus_15.jpg"
                 ],
                 "type": "image"
             }
