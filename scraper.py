@@ -17,7 +17,8 @@ IMAGES_DIR = 'images'
 # 각 마트별 모바일 전단지 URL
 EMART_URL = 'https://eapp.emart.com/leaflet/leafletView_EL.do'
 HOMEPLUS_URL = 'https://my.homeplus.co.kr/leaflet'
-LOTTE_URL = 'https://www.mlotte.net/leaflet'
+LOTTE_URL = 'https://www.mlotte.net/leaflet?rst1=HYPER'
+
 
 # ==========================================
 # 유틸리티 함수 (Utility Functions)
@@ -288,7 +289,8 @@ async def scrape_homeplus(context, session):
 
 async def scrape_lotte(context, session):
     """
-    롯데마트 크롤링 (단순 로직 복구)
+    롯데마트 크롤링 (단순 로직 - URL 수정됨)
+    올바른 링크(?rst1=HYPER)를 사용하므로 바로 이미지가 로딩될 것으로 예상.
     """
     print(f"[롯데마트] 크롤링 시작...")
     page = await context.new_page()
@@ -297,6 +299,10 @@ async def scrape_lotte(context, session):
     try:
         await page.goto(LOTTE_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
+        await page.wait_for_timeout(5000) # 로딩 대기
+        
+        # 스크롤 최하단으로 이동
+        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         await page.wait_for_timeout(3000)
         
         img_elements = await page.query_selector_all('img')
@@ -318,7 +324,7 @@ async def scrape_lotte(context, session):
                     elif real_src.startswith('/'):
                         real_src = 'https://www.mlotte.net' + real_src
                  
-                 # 로고/아이콘 등 기본적인 것만 문자열로 대충 거름 (원래 그랬을 테니)
+                 # 로고/아이콘 등 기본적인 것만 필터링
                  if 'logo' in real_src or 'icon' in real_src:
                      continue
 
