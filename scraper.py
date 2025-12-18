@@ -290,49 +290,89 @@ async def scrape_homeplus(context, session):
 
 async def scrape_lotte(context, session):
     """
-    롯데마트 크롤링 (DOM 파싱 + Lazy Loading 대응)
-    전략: src 속성뿐만 아니라 data-src 속성도 확인하여 이미지 URL 추출.
+    롯데마트 크롤링 (좌표 기반 정렬 + Lazy Loading 강력 대응)
     """
     print(f"[롯데마트] 크롤링 시작...")
     page = await context.new_page()
-    images = []
+    final_images = []
+    
     try:
         await page.goto(LOTTE_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
-        await page.wait_for_timeout(5000) # JS 렌더링 여유 있게 대기
+        await page.wait_for_timeout(3000)
         
-        img_elements = await page.query_selector_all('img')
+        # 스크롤 최하단으로 이동 (Lazy Loading 유도)
+        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        await page.wait_for_timeout(2000)
         
+        # 이미지 데이터 추출 (좌표 포함)
+        img_data = await page.evaluate('''() => {
+            const imgs = Array.from(document.querySelectorAll('img'));
+            return imgs.map(img => {
+                const rect = img.getBoundingClientRect();
+                return {
+                    src: img.src,
+                    dataSrc: img.getAttribute('data-src'),
+                    top: rect.top + window.scrollY,
+                    width: rect.width,
+                    height: rect.height
+                };
+            }).filter(item => {
+                // 필터링: 크기가 충분히 커야 함 (아이콘 제외)
+                return item.width > 200 && item.height > 200;
+            });
+        }''')
+        
+        # 정렬 및 중복 제거
+        sorted_img_data = sorted(img_data, key=lambda x: x['top'])
+        unique_images = []
+        seen_urls = set()
+        
+        for item in sorted_img_data:
+            real_src = item['dataSrc'] if item['dataSrc'] else item['src']
+            
+            if not real_src: continue
+            
+            # URL 보정
+            if not real_src.startswith('http'):
+                if real_src.startswith('//'):
+                    real_src = 'https:' + real_src
+                elif real_src.startswith('/'):
+                    real_src = 'https://www.mlotte.net' + real_src
+            
+            # 로고/아이콘 추가 필터링 (URL 스트링)
+            if 'logo' in real_src or 'icon' in real_src:
+                continue
+                
+            if real_src in seen_urls:
+                continue
+            
+            seen_urls.add(real_src)
+            unique_images.append(real_src)
+            
+            if len(unique_images) >= 20: break
+            
+        print(f"[롯데마트] 발견된 유효 이미지: {len(unique_images)}장")
+        
+        # 다운로드 실행
         tasks = []
         count = 1
-        for img in img_elements:
-            src = await img.get_attribute('src')
-            data_src = await img.get_attribute('data-src') # Lazy Loading 속성 확인
-            real_src = src or data_src
+        for src in unique_images:
+            filename = f"lotte_new_{count:02d}.jpg"
+            tasks.append(download_image(session, src, filename))
+            count += 1
             
-            if real_src and ('jpg' in real_src or 'png' in real_src) and 'logo' not in real_src:
-                 # 상대 경로 처리
-                 if not real_src.startswith('http'):
-                    if real_src.startswith('//'):
-                        real_src = 'https:' + real_src
-                    elif real_src.startswith('/'):
-                        real_src = 'https://www.mlotte.net' + real_src
-                 
-                 filename = f"lotte_new_{count:02d}.jpg"
-                 tasks.append(download_image(session, real_src, filename))
-                 count += 1
-                 if count > 20: break
-        
         if tasks:
             results = await asyncio.gather(*tasks)
-            images = [r for r in results if r is not None]
+            valid_results = [r for r in results if r is not None]
+            final_images = sorted(valid_results) # lotte_new_01.jpg 순 정렬
 
     except Exception as e:
         print(f"[롯데마트] 오류 발생: {e}")
     finally:
         await page.close()
     
-    return images
+    return final_images
 
 
 # ==========================================
