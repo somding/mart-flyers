@@ -47,10 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if ('requestIdleCallback' in window) {
             requestIdleCallback(() => {
                 marts.forEach(mart => {
-                    const images = mart.flyers?.current?.images;
-                    if (images && images.length > 0) {
-                        const img = new Image();
-                        img.src = images[0]; // 1면 이미지 미리 로드 (브라우저 캐시에 저장)
+                    // 최신 전단지 1면 미리 로드
+                    const currentImages = mart.flyers?.current?.images;
+                    if (currentImages && currentImages.length > 0) {
+                        new Image().src = currentImages[0];
+                    }
+
+                    // 지난 전단지 1면 미리 로드 (사용자 요청 반영)
+                    const pastImages = mart.flyers?.past?.images;
+                    if (pastImages && pastImages.length > 0) {
+                        new Image().src = pastImages[0];
                     }
                 });
             });
@@ -58,9 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // 구형 브라우저 폴백
             setTimeout(() => {
                 marts.forEach(mart => {
-                    const images = mart.flyers?.current?.images;
-                    if (images && images.length > 0) {
-                        new Image().src = images[0];
+                    const currentImages = mart.flyers?.current?.images;
+                    if (currentImages && currentImages.length > 0) {
+                        new Image().src = currentImages[0];
+                    }
+                    const pastImages = mart.flyers?.past?.images;
+                    if (pastImages && pastImages.length > 0) {
+                        new Image().src = pastImages[0];
                     }
                 });
             }, 1000);
