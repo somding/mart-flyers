@@ -26,24 +26,32 @@ LOTTE_URL = 'https://www.mlotte.net/leaflet?rst1=HYPER'
 
 def calculate_file_hash(filepath):
     """
-    파일의 MD5 해시값을 계산합니다.
-    이미지 중복 여부를 정밀하게 판단하기 위해 사용됩니다.
-    
-    Args:
-        filepath (str): 파일 경로
-    Returns:
-        str: MD5 해시 문자열 (파일이 없으면 None)
+    파일의 해시값을 계산합니다. (이미지 내용 기반)
+    단순 파일 해시는 메타데이터 변경에도 반응하므로, 이미지 픽셀 데이터만 해싱합니다.
     """
-    hasher = hashlib.md5()
-    try:
-        with open(filepath, 'rb') as f:
-            buf = f.read()
-            hasher.update(buf)
-        return hasher.hexdigest()
-    except FileNotFoundError:
+    if not os.path.exists(filepath):
         return None
+    
+    try:
+        # 1. 이미지 픽셀 데이터 해싱 (가장 정확함)
+        with Image.open(filepath) as img:
+            # 포맷 등 메타데이터 제외하고 순수 픽셀값만 추출
+            pixel_data = img.tobytes()
+            hash_md5 = hashlib.md5()
+            hash_md5.update(pixel_data)
+            return hash_md5.hexdigest()
+    except Exception:
+        # 이미지가 아니거나 에러 시 기존 방식(파일 전체 해시) 사용
+        pass
+        
+    try:
+        hash_md5 = hashlib.md5()
+        with open(filepath, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
     except Exception as e:
-        print(f"[-] 해시 계산 오류 ({filepath}): {e}")
+        print(f"Hash calculation failed: {e}")
         return None
 
 async def download_image(session, url, filename):
