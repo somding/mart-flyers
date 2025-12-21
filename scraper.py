@@ -52,39 +52,61 @@ def calculate_file_hash(filepath):
 
 def is_image_different(path1, path2):
     """
-    두 이미지 파일이 '실질적으로' 다른지 비교합니다.
-    서버의 재압축으로 인한 미세한 파일 크기 차이를 무시하기 위해
-    파일 크기 오차가 3% 미만이고 해상도가 같으면 '같은 파일'로 간주합니다.
+    두 이미지 파일이 '시각적으로' 다른지 비교합니다. (Visual Hashing)
+    단순 파일 크기나 해시 비교는 재압축/메타데이터 변경에 취약하므로,
+    이미지를 축소하여 픽셀 차이를 계산하는 방식(RMS)을 사용합니다.
     
     Args:
         path1 (str): 첫 번째 파일 경로
         path2 (str): 두 번째 파일 경로
     Returns:
-        bool: 다르면 True, 비슷하거나 같으면 False
+        bool: 다르면 True, 시각적으로 유사하면 False
     """
     if not os.path.exists(path1) or not os.path.exists(path2):
-        return True # 파일이 하나라도 없으면 '다름' (변경됨)
+        return True # 파일이 없으면 무조건 '다름(변경됨)' 처리
     
     try:
-        # 1. 파일 크기 비교
-        size1 = os.path.getsize(path1)
-        size2 = os.path.getsize(path2)
-        
-        # 0바이트 파일은 무효함
-        if size1 == 0 or size2 == 0: return True
-        
-        # 크기 차이 비율 계산
-        diff_ratio = abs(size1 - size2) / max(size1, size2)
-        
-        # 2. 유사도 판단 (3% 미만 차이 & 해상도 일치)
-        if diff_ratio < 0.03:
-            with Image.open(path1) as img1, Image.open(path2) as img2:
-                if img1.size == img2.size:
-                    return False # 크기도 비슷하고 해상도도 같음 -> 변경 없음
-        
-        return True # 차이가 크므로 다른 이미지임
-    except Exception:
-        # 파일 열기 실패 등 오류 발생 시 안전하게 '다름'으로 처리하여 업데이트 유도
+        # 1. 파일 크기 비교 (완전히 같으면 바로 패스)
+        if os.path.getsize(path1) == os.path.getsize(path2):
+            return False
+
+        with Image.open(path1) as img1, Image.open(path2) as img2:
+            # 2. 이미지 모드 통일 (RGB)
+            img1 = img1.convert('RGB')
+            img2 = img2.convert('RGB')
+
+            # 3. 해상도가 다르면 -> 다른 이미지
+            if img1.size != img2.size:
+                return True
+
+            # 4. 시각적 비교 (Visual Hash) - 속도를 위해 64x64로 축소
+            # 픽셀 단위로 비교하여 오차(RMSE) 계산
+            # 서버 재압축으로 인한 노이즈를 무시하기 위함
+            
+            # 작게 축소 & 그레이스케일
+            i1 = img1.resize((64, 64)).convert('L')
+            i2 = img2.resize((64, 64)).convert('L')
+            
+            # 픽셀 데이터 추출
+            pixels1 = list(i1.getdata())
+            pixels2 = list(i2.getdata())
+            
+            # 평균 차이 계산
+            diff = 0
+            for p1, p2 in zip(pixels1, pixels2):
+                diff += abs(p1 - p2)
+            
+            avg_diff = diff / len(pixels1)
+            
+            # 평균 픽셀 차이가 5(255 기준 약 2%) 미만이면 '같은 이미지'로 간주
+            # (재압축 노이즈는 보통 1~3 정도 차이 발생)
+            if avg_diff < 5:
+                return False # 같음
+            
+            return True # 다름
+
+    except Exception as e:
+        print(f"  [Warning] 이미지 비교 실패 ({e}), 안전하게 '변경됨'으로 처리합니다.")
         return True
 
 async def download_image(session, url, filename):
