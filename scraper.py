@@ -83,9 +83,9 @@ def is_image_different(path1, path2):
             # 픽셀 단위로 비교하여 오차(RMSE) 계산
             # 서버 재압축으로 인한 노이즈를 무시하기 위함
             
-            # 작게 축소 & 그레이스케일
-            i1 = img1.resize((64, 64)).convert('L')
-            i2 = img2.resize((64, 64)).convert('L')
+            # 작게 축소 & 그레이스케일 (32x32로 축소하여 노이즈 제거 효과 증대)
+            i1 = img1.resize((32, 32)).convert('L')
+            i2 = img2.resize((32, 32)).convert('L')
             
             # 픽셀 데이터 추출
             pixels1 = list(i1.getdata())
@@ -98,9 +98,11 @@ def is_image_different(path1, path2):
             
             avg_diff = diff / len(pixels1)
             
-            # 평균 픽셀 차이가 5(255 기준 약 2%) 미만이면 '같은 이미지'로 간주
-            # (재압축 노이즈는 보통 1~3 정도 차이 발생)
-            if avg_diff < 5:
+            # 기준 완화: 5 -> 15 (약 6% 차이까지 허용)
+            # JPEG 재압축이나 미세한 렌더링 차이를 확실히 무시하기 위함
+            if avg_diff < 15:
+                # 디버깅용 로그 (나중에 필요시 활성화)
+                # print(f"  [Info] 이미지 유사함 (Diff: {avg_diff:.2f}) -> Skip")
                 return False # 같음
             
             return True # 다름
