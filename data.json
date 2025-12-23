@@ -63,7 +63,8 @@
                     "./images/homeplus_new_09.jpg",
                     "./images/homeplus_new_10.jpg"
                 ],
-                "type": "image"
+                "type": "image",
+                "date": "2025-12-23"
             },
             "past": {
                 "title": "지난 전단지",
