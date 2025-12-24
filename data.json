@@ -98,10 +98,10 @@
                     "./images/lotte_new_03.jpg",
                     "./images/lotte_new_04.jpg",
                     "./images/lotte_new_05.jpg",
-                    "./images/lotte_new_06.jpg",
-                    "./images/lotte_new_07.jpg"
+                    "./images/lotte_new_06.jpg"
                 ],
-                "type": "image"
+                "type": "image",
+                "date": "2025-12-24"
             },
             "past": {
                 "title": "지난 전단지",
