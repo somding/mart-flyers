@@ -52,9 +52,9 @@ def calculate_file_hash(filepath):
 
 def is_image_different(path1, path2):
     """
-    두 이미지 파일이 '시각적으로' 다른지 비교합니다. (Visual Hashing)
-    단순 파일 크기나 해시 비교는 재압축/메타데이터 변경에 취약하므로,
-    이미지를 축소하여 픽셀 차이를 계산하는 방식(RMS)을 사용합니다.
+    두 이미지 파일을 **dHash (Difference Hash)** 알고리즘으로 비교합니다.
+    이미지의 밝기 변화 패턴(Gradient)을 비교하므로, 
+    재압축/리사이징/메타데이터 변경에 매우 강인하여 오탐지를 최소화합니다.
     
     Args:
         path1 (str): 첫 번째 파일 경로
@@ -63,46 +63,51 @@ def is_image_different(path1, path2):
         bool: 다르면 True, 시각적으로 유사하면 False
     """
     if not os.path.exists(path1) or not os.path.exists(path2):
-        return True # 파일이 없으면 무조건 '다름(변경됨)' 처리
-    
+        return True 
+
     try:
-        # 1. 파일 크기 비교 (완전히 같으면 바로 패스)
+        # 파일 크기가 완전히 같으면 100% 동일
         if os.path.getsize(path1) == os.path.getsize(path2):
             return False
 
         with Image.open(path1) as img1, Image.open(path2) as img2:
-            # 2. 이미지 모드 통일 (RGB)
-            img1 = img1.convert('RGB')
-            img2 = img2.convert('RGB')
-
-            # 3. 해상도가 다르면 -> 다른 이미지
+            # 해상도가 다르면 다른 이미지로 간주 (페이지 크기 변경 등)
             if img1.size != img2.size:
                 return True
 
-            # 4. 시각적 비교 (Visual Hash) - 속도를 위해 64x64로 축소
-            # 픽셀 단위로 비교하여 오차(RMSE) 계산
-            # 서버 재압축으로 인한 노이즈를 무시하기 위함
+            # --- dHash 계산 ---
+            # 1. 9x8 픽셀로 축소 (가로 9, 세로 8) & 그레이스케일
+            #    왜 9x8인가? 각 행에서 인접한 픽셀끼리 8번 비교하기 위함 
+            i1 = img1.resize((9, 8), Image.Resampling.LANCZOS).convert('L')
+            i2 = img2.resize((9, 8), Image.Resampling.LANCZOS).convert('L')
             
-            # 작게 축소 & 그레이스케일 (32x32로 축소하여 노이즈 제거 효과 증대)
-            i1 = img1.resize((32, 32)).convert('L')
-            i2 = img2.resize((32, 32)).convert('L')
-            
-            # 픽셀 데이터 추출
+            # 2. 픽셀 데이터 추출
             pixels1 = list(i1.getdata())
             pixels2 = list(i2.getdata())
             
-            # 평균 차이 계산
-            diff = 0
-            for p1, p2 in zip(pixels1, pixels2):
-                diff += abs(p1 - p2)
+            # 3. 해시 생성 (행 단위 비교)
+            # 가로 9개 픽셀 -> 인접 비교 -> 8개의 비트
+            # 총 8행 * 8비트 = 64비트 해시
+            hash1 = 0
+            hash2 = 0
             
-            avg_diff = diff / len(pixels1)
+            for row in range(8):
+                for col in range(8):
+                    idx = row * 9 + col
+                    # 왼쪽 픽셀이 오른쪽 픽셀보다 밝으면 1, 아니면 0
+                    if pixels1[idx] > pixels1[idx + 1]:
+                        hash1 |= 1 << (row * 8 + col)
+                    if pixels2[idx] > pixels2[idx + 1]:
+                        hash2 |= 1 << (row * 8 + col)
             
-            # 기준 완화: 5 -> 15 (약 6% 차이까지 허용)
-            # JPEG 재압축이나 미세한 렌더링 차이를 확실히 무시하기 위함
-            if avg_diff < 15:
-                # 디버깅용 로그 (나중에 필요시 활성화)
-                # print(f"  [Info] 이미지 유사함 (Diff: {avg_diff:.2f}) -> Skip")
+            # 4. 해밍 거리(Hamming Distance) 계산: 두 해시의 다른 비트 개수
+            diff = bin(hash1 ^ hash2).count('1')
+            
+            # 5. 판단
+            # 거리가 0이면 완전 일치. 
+            # 1~2 정도는 재압축 노이즈로 허용. 
+            # 3 이상이면 유의미한 구조적 변화가 있다고 판단.
+            if diff <= 2:
                 return False # 같음
             
             return True # 다름
@@ -222,7 +227,7 @@ async def scrape_emart(context, session):
                 btn = await page.query_selector('.btn_next') or await page.query_selector('.d-next')
                 if btn and await btn.is_visible():
                     await btn.click()
-                    await page.wait_for_timeout(1000)
+                    await page.wait_for_timeout(2500) # 페이지 로딩 안정성 확보 (1s -> 2.5s)
                 else:
                     break # 버튼 없으면 종료
             except Exception:
