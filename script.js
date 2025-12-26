@@ -188,8 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const img = document.createElement('img');
 
                 // 전단지는 정적 파일이므로 버전 관리는 scraper에서 파일명으로 처리됨.
-                // 하지만 복구 직후 브라우저 캐시 문제로 옛날 이미지가 보이는 것을 방지하기 위해 랜덤 쿼리 추가
-                img.src = `${imgSrc}?v=${new Date().getTime()}`;
+                img.src = imgSrc;
                 img.alt = `${currentMart.name} 전단지 Page ${index + 1}`;
                 img.className = 'flyer-img';
 
