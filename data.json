@@ -39,14 +39,10 @@
                     "./images/homeplus_new_01.jpg",
                     "./images/homeplus_new_02.jpg",
                     "./images/homeplus_new_03.jpg",
-                    "./images/homeplus_new_04.jpg",
-                    "./images/homeplus_new_05.jpg",
-                    "./images/homeplus_new_06.jpg",
-                    "./images/homeplus_new_07.jpg",
-                    "./images/homeplus_new_08.jpg"
+                    "./images/homeplus_new_04.jpg"
                 ],
                 "type": "image",
-                "date": "2025-12-28"
+                "date": "2025-12-30"
             },
             "past": {
                 "title": "지난 전단지",
@@ -58,9 +54,7 @@
                     "./images/homeplus_05.jpg",
                     "./images/homeplus_06.jpg",
                     "./images/homeplus_07.jpg",
-                    "./images/homeplus_08.jpg",
-                    "./images/homeplus_09.jpg",
-                    "./images/homeplus_10.jpg"
+                    "./images/homeplus_08.jpg"
                 ],
                 "type": "image"
             }
