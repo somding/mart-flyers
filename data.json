@@ -11,17 +11,24 @@
                     "./images/emart_new_01.jpg",
                     "./images/emart_new_02.jpg",
                     "./images/emart_new_03.jpg",
-                    "./images/emart_new_04.jpg"
+                    "./images/emart_new_04.jpg",
+                    "./images/emart_new_05.jpg",
+                    "./images/emart_new_06.jpg",
+                    "./images/emart_new_07.jpg",
+                    "./images/emart_new_08.jpg",
+                    "./images/emart_new_09.jpg",
+                    "./images/emart_new_10.jpg"
                 ],
                 "type": "image",
-                "date": "2025-12-26"
+                "date": "2026-01-01"
             },
             "past": {
                 "title": "지난 전단지",
                 "images": [
                     "./images/emart_01.jpg",
                     "./images/emart_02.jpg",
-                    "./images/emart_03.jpg"
+                    "./images/emart_03.jpg",
+                    "./images/emart_04.jpg"
                 ],
                 "type": "image"
             }
