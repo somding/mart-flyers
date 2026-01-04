@@ -77,12 +77,10 @@
                 "title": "최신 전단지 보기",
                 "images": [
                     "./images/lotte_new_01.jpg",
-                    "./images/lotte_new_02.jpg",
-                    "./images/lotte_new_03.jpg",
-                    "./images/lotte_new_04.jpg"
+                    "./images/lotte_new_02.jpg"
                 ],
                 "type": "image",
-                "date": "2025-12-31"
+                "date": "2026-01-04"
             },
             "past": {
                 "title": "지난 전단지",
@@ -90,9 +88,7 @@
                     "./images/lotte_01.jpg",
                     "./images/lotte_02.jpg",
                     "./images/lotte_03.jpg",
-                    "./images/lotte_04.jpg",
-                    "./images/lotte_05.jpg",
-                    "./images/lotte_06.jpg"
+                    "./images/lotte_04.jpg"
                 ],
                 "type": "image"
             }
