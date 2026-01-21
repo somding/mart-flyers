@@ -14,7 +14,8 @@
                     "./images/emart_new_04.jpg",
                     "./images/emart_new_05.jpg",
                     "./images/emart_new_06.jpg",
-                    "./images/emart_new_07.jpg"
+                    "./images/emart_new_07.jpg",
+                    "./images/emart_new_08.jpg"
                 ],
                 "type": "image",
                 "date": "2026-01-21"
@@ -28,8 +29,7 @@
                     "./images/emart_04.jpg",
                     "./images/emart_05.jpg",
                     "./images/emart_06.jpg",
-                    "./images/emart_07.jpg",
-                    "./images/emart_08.jpg"
+                    "./images/emart_07.jpg"
                 ],
                 "type": "image"
             }
