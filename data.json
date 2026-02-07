@@ -9,25 +9,10 @@
                 "title": "최신 전단지 보기",
                 "images": [
                     "./images/emart_new_01.jpg",
-<<<<<<< HEAD
-                    "./images/emart_new_02.jpg",
-                    "./images/emart_new_03.jpg",
-                    "./images/emart_new_04.jpg",
-                    "./images/emart_new_05.jpg",
-                    "./images/emart_new_06.jpg",
-                    "./images/emart_new_07.jpg",
-                    "./images/emart_new_08.jpg",
-                    "./images/emart_new_09.jpg",
-                    "./images/emart_new_10.jpg"
-                ],
-                "type": "image",
-                "date": "2026-01-29"
-=======
                     "./images/emart_new_02.jpg"
                 ],
                 "type": "image",
                 "date": "2026-02-07"
->>>>>>> 1719051 (Fix Emart scraper to use SSG 2026 data and update flyers)
             },
             "past": {
                 "title": "지난 전단지",
@@ -56,11 +41,7 @@
                     "./images/homeplus_new_04.jpg"
                 ],
                 "type": "image",
-<<<<<<< HEAD
-                "date": "2026-01-28"
-=======
                 "date": "2026-02-07"
->>>>>>> 1719051 (Fix Emart scraper to use SSG 2026 data and update flyers)
             },
             "past": {
                 "title": "지난 전단지",
@@ -86,18 +67,10 @@
                     "./images/lotte_new_01.jpg",
                     "./images/lotte_new_02.jpg",
                     "./images/lotte_new_03.jpg",
-<<<<<<< HEAD
-                    "./images/lotte_new_04.jpg",
-                    "./images/lotte_new_05.jpg"
-                ],
-                "type": "image",
-                "date": "2026-01-28"
-=======
                     "./images/lotte_new_04.jpg"
                 ],
                 "type": "image",
                 "date": "2026-02-07"
->>>>>>> 1719051 (Fix Emart scraper to use SSG 2026 data and update flyers)
             },
             "past": {
                 "title": "지난 전단지",
