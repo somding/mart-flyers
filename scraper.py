@@ -183,49 +183,59 @@ async def download_image(session, url, filename):
 
 async def scrape_emart(context, session):
     """
-    [이마트] SSG.com 전단행사 페이지 크롤링 (2026 최신 대응)
-    - 기존 eapp.emart.com이 2025년 과거 데이터만 제공하므로,
-    - SSG.com의 주간 행사 페이지에서 배너 이미지를 수집합니다.
+    [이마트] 순차적 페이지 방문 방식
+    - '다음' 버튼을 클릭하며 페이지를 넘기고, 중앙에 있는 큰 이미지를 수집합니다.
     """
-    print(f"[이마트] SSG 크롤링 시작...")
+    print(f"[이마트] 크롤링 시작...")
     page = await context.new_page()
     images = []
     
     try:
-        # SSG 이마트 주간 행사 페이지
-        url = 'https://m-emart.ssg.com/page/weeklyevent.ssg'
-        await page.goto(url, timeout=60000)
+        await page.goto(EMART_URL, timeout=60000)
         await page.wait_for_load_state('networkidle')
-        await page.wait_for_timeout(3000)
+        await page.wait_for_timeout(2000)
         
-        # 이미지 추출: sitem(상품) 제외, simg(배너) 포함 + /cmpt/banner/ 경로 확인
-        # 가로 300px 이상 필터링
-        img_srcs = await page.evaluate('''() => {
-            const imgs = Array.from(document.querySelectorAll('img'));
-            return imgs.filter(img => {
-                const src = img.src || '';
-                const rect = img.getBoundingClientRect();
-                return rect.width > 300 && 
-                       src.includes('simg.ssgcdn.com') && 
-                       src.includes('/cmpt/banner/');
-            }).map(img => img.src);
-        }''')
+        print("[이마트] 페이지 순회 중...")
+        for i in range(20): # 안전을 위해 최대 20페이지 제한
+            try:
+                # 현재 페이지에서 가장 유력한 전단지 이미지 추출
+                visible_img_src = await page.evaluate('''() => {
+                    const imgs = Array.from(document.querySelectorAll('img'));
+                    // 300px 이상이고 로고가 아닌 이미지 필터링
+                    const candidates = imgs.filter(img => {
+                        const rect = img.getBoundingClientRect();
+                        return rect.width > 300 && rect.height > 300 && 
+                               !img.src.includes('logo') && !img.src.includes('icon');
+                    });
+                    return candidates.length > 0 ? candidates[0].src : null;
+                }''')
 
-        # 중복 제거
-        unique_urls = []
-        for src in img_srcs:
-            if src not in unique_urls:
-                unique_urls.append(src)
-        
-        print(f"[이마트] 배너 이미지 {len(unique_urls)}장 발견 (SSG)")
+                if visible_img_src:
+                    # 임시 파일명 생성 (temp_emart_XX.jpg)
+                    count = len(images) + 1
+                    filename = f"temp_emart_{count:02d}.jpg"
+                    
+                    # 중복 URL 체크
+                    if not any(item['url'] == visible_img_src for item in images):
+                        print(f"  + {count}페이지 이미지 발견")
+                        images.append({'url': visible_img_src, 'filename': filename})
+            except Exception:
+                pass
 
-        # 다운로드
-        tasks = []
-        for idx, src in enumerate(unique_urls):
-             # SSG 이미지는 URL 쿼리가 많으므로 정리 필요할 수 있으나, download_image가 처리함
-             filename = f"temp_emart_{idx+1:02d}.jpg"
-             tasks.append(download_image(session, src, filename))
+            # '다음' 버튼 클릭
+            try:
+                btn = await page.query_selector('.btn_next') or await page.query_selector('.d-next')
+                if btn and await btn.is_visible():
+                    await btn.click()
+                    await page.wait_for_timeout(2500) # 페이지 로딩 안정성 확보 (1s -> 2.5s)
+                else:
+                    break # 버튼 없으면 종료
+            except Exception:
+                break
         
+        # 이미지 다운로드 (병렬)
+        print(f"[이마트] 총 {len(images)}장 다운로드 시도...")
+        tasks = [download_image(session, item['url'], item['filename']) for item in images]
         if tasks:
             results = await asyncio.gather(*tasks)
             # 성공한 파일 경로만 반환
