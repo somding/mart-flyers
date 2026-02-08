@@ -419,7 +419,8 @@ async def main():
                 
                 # 다운로드 실패 등으로 새 이미지가 없으면 패스
                 if not new_images:
-                    print(f"[{mart_name}] 수집된 이미지가 없습니다. 업데이트 중단.")
+                    print(f"[{mart_name}] [Warning] 수집된 이미지가 없습니다. (Selector 매칭 실패 또는 네트워크 오류 가능성)")
+                    print(f"[{mart_name}] 기존 데이터를 유지합니다.")
                     return
 
                 # 파일명 접두사 결정 (저장될 이름)
